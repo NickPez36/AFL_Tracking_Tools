@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AFL Possession Tracker v2.1</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #1a1a1a; color: #ffffff; padding: 20px; min-height: 100vh; }
+        .container { max-width: 420px; margin: 0 auto; }
+        h1 { text-align: center; margin-bottom: 20px; font-size: 24px; }
+        .team-setup, .quarter-setup, .speed-setup { background: #2d2d2d; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+        .team-config { margin-bottom: 20px; }
+        .team-config h3, .quarter-setup h3, .speed-setup h3 { margin-bottom: 10px; font-size: 18px; text-align: center; }
+        .input-group { margin-bottom: 15px; }
+        .team-name-color { display: flex; gap: 10px; align-items: flex-end; }
+        .name-input { flex: 1; }
+        label { display: block; margin-bottom: 5px; font-weight: 500; }
+        input[type="text"] { width: 100%; padding: 12px; border: 1px solid #444; border-radius: 8px; background: #3a3a3a; color: #ffffff; font-size: 16px; }
+        input[type="color"] { width: 60px; height: 49px; border: none; border-radius: 8px; cursor: pointer; }
+        .timer-display { display: flex; justify-content: center; gap: 20px; margin: 20px 0; }
+        .timer { text-align: center; font-size: 28px; font-weight: bold; color: #ffffff; font-family: monospace; }
+        .timer-label { font-size: 14px; color: #ccc; margin-bottom: 5px; }
+        .controls, .initial-controls { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
+        .control-row { display: flex; gap: 10px; }
+        .possession-controls { display: flex; flex-direction: column; gap: 10px; }
+        button { padding: 15px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; flex: 1; }
+        .start-btn { background: #4CAF50; color: white; }
+        .start-btn:hover { background: #45a049; }
+        .pause-btn { background: #ff9800; color: white; }
+        .pause-btn:hover { background: #f57c00; }
+        .load-btn { background: #607D8B; color: white; }
+        .load-btn:hover { background: #546E7A; }
+        .whistle-btn { background: #333; color: white; border: 2px solid #666; }
+        .whistle-btn:hover { background: #444; }
+        .possession-btn { color: white; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); padding: 20px; min-height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.3; }
+        .possession-btn:hover { transform: scale(1.05); }
+        .possession-btn.active, .quarter-btn.active, .speed-btn.active { transform: scale(0.95); box-shadow: inset 0 0 15px rgba(0,0,0,0.5); }
+        .possession-btn.active { animation: pulse 1s infinite; border: 3px solid #FFD700; }
+        .quarter-btn.active, .speed-btn.active { border: 3px solid #00BCD4; }
+        .possession-btn .team-name-display { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
+        @keyframes pulse { 0% { box-shadow: inset 0 0 15px rgba(0,0,0,0.5), 0 0 0 0 rgba(255, 215, 0, 0.7); } 50% { box-shadow: inset 0 0 15px rgba(0,0,0,0.5), 0 0 0 5px rgba(255, 215, 0, 0.3); } 100% { box-shadow: inset 0 0 15px rgba(0,0,0,0.5), 0 0 0 0 rgba(255, 215, 0, 0); } }
+        .possession-stats { font-size: 15px; margin-top: 5px; opacity: 0.9; }
+        .end-possession-btn { background: #ff9800; color: white; margin: 10px auto; display: block; }
+        .finish-btn { background: #f44336; color: white; }
+        .download-btn { background: #2196F3; color: white; }
+        .quarter-btn, .speed-btn { background: #455A64; color: white; }
+        .quarter-btn.active, .speed-btn.active { background: #0097A7; }
+        button:disabled { background: #666 !important; opacity: 0.7; cursor: not-allowed !important; }
+        .status { text-align: center; margin-top: 20px; font-size: 14px; color: #ccc; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AFL Possession Tracker</h1>
+        
+        <div id="setupContainer">
+            <div class="team-setup">
+                <div class="team-config">
+                    <h3>Team 1</h3>
+                    <div class="input-group">
+                        <div class="team-name-color">
+                            <div class="name-input"><label>Team Name:</label><input type="text" id="team1Name" value="HomeTeam"></div>
+                            <div><label>Colour:</label><input type="color" id="team1Color" value="#3A5998"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="team-config">
+                    <h3>Team 2</h3>
+                    <div class="input-group">
+                        <div class="team-name-color">
+                            <div class="name-input"><label>Team Name:</label><input type="text" id="team2Name" value="AwayTeam"></div>
+                            <div><label>Colour:</label><input type="color" id="team2Color" value="#FFFFFF"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="quarter-setup" id="quarterContainer">
+            <h3>Select Quarter</h3>
+            <div class="control-row" id="quarterSelection">
+                <button class="quarter-btn" id="q1Btn" onclick="selectQuarter('Q1')">Q1</button>
+                <button class="quarter-btn" id="q2Btn" onclick="selectQuarter('Q2')">Q2</button>
+                <button class="quarter-btn" id="q3Btn" onclick="selectQuarter('Q3')">Q3</button>
+                <button class="quarter-btn" id="q4Btn" onclick="selectQuarter('Q4')">Q4</button>
+            </div>
+        </div>
+
+        <div class="speed-setup" id="speedContainer">
+            <h3>Playback Speed</h3>
+            <div class="control-row" id="speedControls">
+                <button class="speed-btn active" onclick="setPlaybackRate(1)">1x</button>
+                <button class="speed-btn" onclick="setPlaybackRate(1.5)">1.5x</button>
+                <button class="speed-btn" onclick="setPlaybackRate(2)">2x</button>
+            </div>
+        </div>
+
+        <div class="timer-display">
+            <div class="timer"><div class="timer-label">Match Time</div><div id="timerDisplay">00:00.0</div></div>
+            <div class="timer"><div class="timer-label">Quarter Time</div><div id="quarterDisplay">00:00.0</div></div>
+        </div>
+
+        <div class="controls">
+            <div class="initial-controls" id="initialControls">
+                 <button class="start-btn" id="startBtn" onclick="startTimer()">Start Match</button>
+                 <button class="load-btn" id="loadBtn" onclick="document.getElementById('fileUploader').click()">Load Previous Match</button>
+                 <input type="file" id="fileUploader" accept=".xml" style="display:none;">
+            </div>
+
+            <button class="pause-btn" id="pauseBtn" onclick="togglePause()" style="display: none;">Pause</button>
+            
+            <button class="start-btn" id="startQuarterBtn" onclick="startQuarter()" style="display: none;">Start Quarter</button>
+            <button class="whistle-btn" id="whistleBtn" onclick="activateWhistle()" style="display: none;">Whistle</button>
+            
+            <div class="possession-controls" id="possessionControls" style="display: none;">
+                <div class="control-row">
+                    <button class="possession-btn" id="team1Btn" onclick="togglePossession('team1')"><div class="team-name-display">TeamA Possession</div><div class="possession-stats" id="team1Stats"></div></button>
+                    <button class="possession-btn" id="team2Btn" onclick="togglePossession('team2')"><div class="team-name-display">TeamB Possession</div><div class="possession-stats" id="team2Stats"></div></button>
+                </div>
+                <div class="control-row">
+                    <button class="possession-btn" id="team1FwdHalfBtn" onclick="togglePossession('team1FwdHalf')"><div class="team-name-display">TeamA Fwd Half</div><div class="possession-stats" id="team1FwdHalfStats"></div></button>
+                    <button class="possession-btn" id="team2FwdHalfBtn" onclick="togglePossession('team2FwdHalf')"><div class="team-name-display">TeamB Fwd Half</div><div class="possession-stats" id="team2FwdHalfStats"></div></button>
+                </div>
+                 <div class="control-row">
+                    <button class="possession-btn" id="disputedBtn" onclick="togglePossession('disputed')" style="background-color: #808080;"><div class="team-name-display">Disputed Ball</div><div class="possession-stats" id="disputedStats"></div></button>
+                </div>
+                <button class="end-possession-btn" id="endPossessionBtn" onclick="endPossession()" disabled>End Possession</button>
+            </div>
+
+            <div class="control-row" id="endControls" style="display: none;">
+                <button class="finish-btn" id="endQuarterBtn" onclick="endQuarter()">End Quarter</button>
+                <button class="finish-btn" onclick="finishMatch()">Finish Match</button>
+                <button class="download-btn" id="downloadBtn" onclick="downloadXML()" disabled>Download XML</button>
+            </div>
+        </div>
+
+        <div class="status" id="status">Ready to start</div>
+    </div>
+
+    <script>
+        // --- STATE VARIABLES ---
+        let masterInterval = null;
+        let isRunning = false, isPaused = false, quarterRunning = false;
+        
+        // Timekeeping state
+        let playbackRate = 1.0;
+        let lastRealTimeUpdate = 0; // Stores Date.now()
+        let matchVirtualTime = 0;   // Accumulated virtual time for the match in ms
+        let quarterVirtualTime = 0; // Accumulated virtual time for the quarter in ms
+
+        let instances = [], instanceIdCounter = 1;
+        let currentPossession = null, currentPossessionStart = 0, currentQuarterLabel = null;
+        
+        // Possession time trackers (stores virtual time in seconds)
+        let timeTrackers = {
+            team1PossessionTime: 0, team2PossessionTime: 0,
+            team1FwdHalfTime: 0, team2FwdHalfTime: 0, disputedTime: 0
+        };
+        const possessionTypes = {
+            team1: { timeKey: 'team1PossessionTime', buttonId: 'team1Btn', name: 'Possession', statId: 'team1Stats' },
+            team2: { timeKey: 'team2PossessionTime', buttonId: 'team2Btn', name: 'Possession', statId: 'team2Stats' },
+            team1FwdHalf: { timeKey: 'team1FwdHalfTime', buttonId: 'team1FwdHalfBtn', name: 'Fwd Half', statId: 'team1FwdHalfStats' },
+            team2FwdHalf: { timeKey: 'team2FwdHalfTime', buttonId: 'team2FwdHalfBtn', name: 'Fwd Half', statId: 'team2FwdHalfStats' },
+            disputed: { timeKey: 'disputedTime', buttonId: 'disputedBtn', name: 'Disputed Ball', statId: 'disputedStats' }
+        };
+
+        // --- HELPER FUNCTIONS ---
+        const hexToRgb = hex => { const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return r ? { r: parseInt(r[1], 16), g: parseInt(r[2], 16), b: parseInt(r[3], 16) } : null; };
+        const rgbTo16Bit = (r, g, b) => ({ R: Math.round(r * 65535 / 255), G: Math.round(g * 65535 / 255), B: Math.round(b * 65535 / 255) });
+        const escapeXml = unsafe => unsafe.replace(/[<>&'"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','\'':'&apos;','"':'&quot;'})[c]);
+        const formatTime = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}.${Math.floor((s%1)*10)}`;
+        const formatPossessionTime = s => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+        
+        // --- TIMEKEEPING CORE ---
+        function masterUpdate() {
+            if (!isRunning || isPaused) return;
+
+            const now = Date.now();
+            const realElapsed = now - lastRealTimeUpdate;
+
+            if (realElapsed > 0) {
+                const virtualElapsed = realElapsed * playbackRate;
+                matchVirtualTime += virtualElapsed;
+                if (quarterRunning) {
+                    quarterVirtualTime += virtualElapsed;
+                }
+            }
+
+            lastRealTimeUpdate = now;
+
+            // Update displays
+            document.getElementById('timerDisplay').textContent = formatTime(matchVirtualTime / 1000);
+            if (quarterRunning) {
+                document.getElementById('quarterDisplay').textContent = formatTime(quarterVirtualTime / 1000);
+            }
+            updatePossessionStats();
+        }
+        
+        const getCurrentTime = () => matchVirtualTime / 1000;
+        const getCurrentQuarterTime = () => quarterVirtualTime / 1000;
+
+        // --- UI & STATE UPDATE FUNCTIONS ---
+        function updateTeamButtons() {
+            const team1Name = document.getElementById('team1Name').value || 'TeamA';
+            const team2Name = document.getElementById('team2Name').value || 'TeamB';
+            const team1Color = document.getElementById('team1Color').value;
+            const team2Color = document.getElementById('team2Color').value;
+            document.getElementById('team1Btn').innerHTML = `<div class="team-name-display">${escapeXml(team1Name)} Possession</div><div class="possession-stats" id="team1Stats"></div>`;
+            document.getElementById('team2Btn').innerHTML = `<div class="team-name-display">${escapeXml(team2Name)} Possession</div><div class="possession-stats" id="team2Stats"></div>`;
+            document.getElementById('team1FwdHalfBtn').innerHTML = `<div class="team-name-display">${escapeXml(team1Name)} Fwd Half</div><div class="possession-stats" id="team1FwdHalfStats"></div>`;
+            document.getElementById('team2FwdHalfBtn').innerHTML = `<div class="team-name-display">${escapeXml(team2Name)} Fwd Half</div><div class="possession-stats" id="team2FwdHalfStats"></div>`;
+            document.getElementById('disputedBtn').innerHTML = `<div class="team-name-display">Disputed Ball</div><div class="possession-stats" id="disputedStats"></div>`;
+            document.getElementById('team1Btn').style.backgroundColor = team1Color;
+            document.getElementById('team2Btn').style.backgroundColor = team2Color;
+            document.getElementById('team1FwdHalfBtn').style.backgroundColor = team1Color;
+            document.getElementById('team2FwdHalfBtn').style.backgroundColor = team2Color;
+            updatePossessionStats(); 
+        }
+
+        function updatePossessionStats() {
+            const currentTime = getCurrentTime();
+            let tempLiveTimes = { ...timeTrackers }; 
+            if (quarterRunning && currentPossession && !isPaused) {
+                const possessionInfo = possessionTypes[currentPossession];
+                // Time is in seconds, currentPossessionStart is in seconds
+                tempLiveTimes[possessionInfo.timeKey] += currentTime - currentPossessionStart;
+            }
+            const totalTrackedTime = Object.values(tempLiveTimes).reduce((a, b) => a + b, 0);
+            for (const type in possessionTypes) {
+                const info = possessionTypes[type];
+                const time = tempLiveTimes[info.timeKey];
+                const percent = totalTrackedTime > 0 ? Math.round((time / totalTrackedTime) * 100) : 0;
+                const statElement = document.getElementById(info.statId);
+                if (statElement) statElement.textContent = `${formatPossessionTime(time)} (${percent}%)`;
+            }
+        }
+        
+        function selectQuarter(qLabel) {
+            currentQuarterLabel = qLabel;
+            document.querySelectorAll('#quarterSelection button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(qLabel.toLowerCase() + 'Btn').classList.add('active');
+            document.getElementById('status').textContent = `${qLabel} selected. Ready to start quarter.`;
+        }
+
+        function setPlaybackRate(rate) {
+            if (rate === playbackRate) return;
+            // Before changing the rate, do a final update at the old rate
+            masterUpdate();
+            playbackRate = rate;
+            // Update UI buttons
+            document.querySelectorAll('#speedControls button').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+        
+        function setQuarterButtonsState(disabled) {
+            document.querySelectorAll('#quarterSelection button').forEach(btn => btn.disabled = disabled);
+        }
+
+        // --- CORE LOGIC FUNCTIONS ---
+        function startTimer() {
+            if (!currentQuarterLabel) { alert("Please select a quarter first!"); return; }
+            
+            matchVirtualTime = 0;
+            lastRealTimeUpdate = Date.now();
+            isRunning = true;
+            isPaused = false;
+            
+            clearInterval(masterInterval);
+            masterInterval = setInterval(masterUpdate, 100);
+
+            document.getElementById('setupContainer').style.display = 'none';
+            document.getElementById('initialControls').style.display = 'none';
+            document.getElementById('pauseBtn').style.display = 'block';
+            document.getElementById('startQuarterBtn').style.display = 'block';
+            document.getElementById('endControls').style.display = 'flex';
+            setQuarterButtonsState(true);
+            document.getElementById('status').textContent = 'Match running - Start quarter to begin';
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            const pauseBtn = document.getElementById('pauseBtn');
+            if (isPaused) {
+                // Before pausing, do a final update to "bank" the time
+                masterUpdate();
+                pauseBtn.textContent = 'Resume';
+                document.getElementById('status').textContent = `Match Paused at ${formatTime(getCurrentTime())}`;
+            } else { 
+                // When resuming, just reset the real time anchor
+                lastRealTimeUpdate = Date.now();
+                pauseBtn.textContent = 'Pause';
+                document.getElementById('status').textContent = 'Match Resumed.';
+            }
+        }
+
+        function startQuarter() {
+            quarterVirtualTime = 0;
+            quarterRunning = true;
+            document.getElementById('startQuarterBtn').style.display = 'none';
+            document.getElementById('whistleBtn').style.display = 'block';
+            document.getElementById('status').textContent = `${currentQuarterLabel} running`;
+        }
+        
+        function endCurrentPossession(endTime) { // endTime is in seconds
+            if (currentPossession) {
+                const duration = endTime - currentPossessionStart;
+                const possessionInfo = possessionTypes[currentPossession];
+                timeTrackers[possessionInfo.timeKey] += duration;
+                
+                let code, teamName;
+                if (currentPossession.startsWith('team1')) teamName = document.getElementById('team1Name').value;
+                else if (currentPossession.startsWith('team2')) teamName = document.getElementById('team2Name').value;
+                code = teamName ? `${teamName} ${possessionInfo.name}` : possessionInfo.name;
+                
+                let labels = currentQuarterLabel ? [{ group: 'Quarter', text: currentQuarterLabel }] : [];
+                instances.push({ ID: instanceIdCounter++, start: currentPossessionStart, end: endTime, code: escapeXml(code), labels: labels });
+                
+                Object.values(possessionTypes).forEach(p => document.getElementById(p.buttonId).classList.remove('active'));
+                document.getElementById('endPossessionBtn').disabled = true;
+                currentPossession = null;
+            }
+        }
+
+        function endQuarter() {
+            quarterRunning = false;
+            endCurrentPossession(getCurrentTime());
+            updatePossessionStats();
+            document.getElementById('possessionControls').style.display = 'none';
+            document.getElementById('whistleBtn').style.display = 'none';
+            document.getElementById('quarterDisplay').textContent = '00:00.0';
+            document.getElementById('startQuarterBtn').style.display = 'block';
+            setQuarterButtonsState(false);
+            document.getElementById('status').textContent = `${currentQuarterLabel} ended. Select next quarter.`;
+        }
+
+        function togglePossession(type) {
+            if (isPaused || !quarterRunning) return;
+            const currentTime = getCurrentTime();
+            const previousPossession = currentPossession;
+            if (currentPossession) endCurrentPossession(currentTime);
+            if (previousPossession !== type) {
+                currentPossession = type;
+                currentPossessionStart = currentTime;
+                const info = possessionTypes[type];
+                document.getElementById(info.buttonId).classList.add('active');
+                document.getElementById('endPossessionBtn').disabled = false;
+                let teamName = '';
+                if (type.startsWith('team1')) teamName = document.getElementById('team1Name').value;
+                if (type.startsWith('team2')) teamName = document.getElementById('team2Name').value;
+                document.getElementById('status').textContent = `${teamName} ${info.name} in progress`.trim();
+            } else {
+                 document.getElementById('status').textContent = 'No possession';
+            }
+            updatePossessionStats();
+        }
+
+        function endPossession() { if (isPaused) return; endCurrentPossession(getCurrentTime()); updatePossessionStats(); document.getElementById('status').textContent = 'No possession'; }
+
+        function activateWhistle() {
+            if (isPaused) return;
+            const currentTime = getCurrentTime();
+            endCurrentPossession(currentTime); 
+            let labels = [
+                { group: 'Team 1', text: escapeXml(document.getElementById('team1Name').value) },
+                { group: 'Team 2', text: escapeXml(document.getElementById('team2Name').value) }
+            ];
+            if (currentQuarterLabel) labels.push({ group: 'Quarter', text: currentQuarterLabel });
+            instances.push({ ID: instanceIdCounter++, start: currentTime - 2, end: currentTime + 2, code: 'Whistle', labels: labels });
+            document.getElementById('whistleBtn').style.display = 'none';
+            document.getElementById('possessionControls').style.display = 'flex';
+            Object.values(possessionTypes).forEach(p => document.getElementById(p.buttonId).disabled = false);
+            updatePossessionStats();
+            document.getElementById('status').textContent = 'Whistle blown';
+        }
+
+        function finishMatch() {
+            isRunning = false; quarterRunning = false; isPaused = true;
+            clearInterval(masterInterval);
+            endCurrentPossession(getCurrentTime());
+            updatePossessionStats();
+            document.querySelectorAll('button').forEach(btn => btn.style.display = 'none');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const endControls = document.getElementById('endControls');
+            endControls.style.display = 'flex';
+            endControls.innerHTML = '';
+            endControls.appendChild(downloadBtn);
+            downloadBtn.style.display = 'block';
+            downloadBtn.disabled = false;
+
+            document.getElementById('status').textContent = 'Match finished - Ready to download';
+        }
+
+        function downloadXML() {
+            const team1Name = document.getElementById('team1Name').value;
+            const team2Name = document.getElementById('team2Name').value;
+            const team1RGB = rgbTo16Bit(...Object.values(hexToRgb(document.getElementById('team1Color').value)));
+            const team2RGB = rgbTo16Bit(...Object.values(hexToRgb(document.getElementById('team2Color').value)));
+            let xml = '<file>\n<ALL_INSTANCES>\n';
+            instances.forEach(i => {
+                xml += `<instance>\n<ID>${i.ID}</ID>\n<start>${i.start}</start>\n<end>${i.end}</end>\n<code>${i.code}</code>\n`;
+                if (i.labels && i.labels.length > 0) {
+                    i.labels.forEach(l => xml += `<label>\n<group>${escapeXml(l.group)}</group>\n<text>${escapeXml(l.text)}</text>\n</label>\n`);
+                }
+                xml += '</instance>\n';
+            });
+            xml += '</ALL_INSTANCES>\n<ROWS>\n';
+            const addRow = (code, rgb) => { xml += `<row>\n<code>${escapeXml(code)}</code>\n<R>${rgb.R}</R>\n<G>${rgb.G}</G>\n<B>${rgb.B}</B>\n</row>\n`; };
+            addRow(`${team1Name} Possession`, team1RGB); addRow(`${team2Name} Possession`, team2RGB);
+            addRow(`${team1Name} Fwd Half`, team1RGB); addRow(`${team2Name} Fwd Half`, team2RGB);
+            addRow('Disputed Ball', { R: 32768, G: 32768, B: 32768 });
+            addRow('Whistle', { R: 0, G: 0, B: 0 });
+            for(let i=1; i<=4; i++) xml += `<row>\n<code>Q${i}</code>\n<R>65535</R>\n</row>\n`;
+            xml += '</ROWS>\n</file>';
+            const today = new Date();
+            const dateStr = today.getFullYear().toString().substr(-2) + String(today.getMonth() + 1).padStart(2, '0') + String(today.getDate()).padStart(2, '0');
+            const filename = `${dateStr} - ${escapeXml(team1Name)} v ${escapeXml(team2Name)} - Possession.xml`;
+            const blob = new Blob([xml], { type: 'application/xml' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob); a.download = filename;
+            a.click(); URL.revokeObjectURL(a.href);
+        }
+
+        function loadXMLFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(e.target.result, "application/xml");
+                    if (xmlDoc.getElementsByTagName("parsererror").length) throw new Error('Failed to parse XML.');
+                    instances = [];
+                    timeTrackers = Object.keys(timeTrackers).reduce((acc, key) => ({...acc, [key]: 0}), {});
+                    let lastTime = 0, highestId = 0;
+                    const teamNames = {};
+                    xmlDoc.querySelectorAll('row').forEach(row => {
+                        const code = row.querySelector('code')?.textContent;
+                        const match = code?.match(/(.+) (Possession|Fwd Half)/);
+                        if(match){ const teamName = match[1]; if (!teamNames[teamName]) teamNames[teamName] = teamName; }
+                    });
+                    const discoveredTeams = Object.values(teamNames);
+                    if(discoveredTeams[0]) document.getElementById('team1Name').value = discoveredTeams[0];
+                    if(discoveredTeams[1]) document.getElementById('team2Name').value = discoveredTeams[1];
+                    updateTeamButtons();
+                    const t1Name = document.getElementById('team1Name').value;
+                    const t2Name = document.getElementById('team2Name').value;
+                    const codeToTimeKeyMap = {
+                        [`${t1Name} Possession`]: 'team1PossessionTime', [`${t2Name} Possession`]: 'team2PossessionTime',
+                        [`${t1Name} Fwd Half`]: 'team1FwdHalfTime', [`${t2Name} Fwd Half`]: 'team2FwdHalfTime',
+                        'Disputed Ball': 'disputedTime'
+                    };
+                    xmlDoc.querySelectorAll('instance').forEach(inst => {
+                        const id = parseInt(inst.querySelector('ID').textContent);
+                        const start = parseFloat(inst.querySelector('start').textContent);
+                        const end = parseFloat(inst.querySelector('end').textContent);
+                        const code = inst.querySelector('code').textContent;
+                        const duration = end - start;
+                        if (id > highestId) highestId = id; if (end > lastTime) lastTime = end;
+                        const timeKey = codeToTimeKeyMap[code];
+                        if(timeKey) timeTrackers[timeKey] += duration;
+                        const labels = Array.from(inst.querySelectorAll('label')).map(l => ({ group: l.querySelector('group').textContent, text: l.querySelector('text').textContent }));
+                        if(labels.some(l => l.group === 'Quarter')) currentQuarterLabel = labels.find(l => l.group === 'Quarter').text;
+                        instances.push({ ID: id, start, end, code: escapeXml(code), labels });
+                    });
+                    instanceIdCounter = highestId + 1;
+                    matchVirtualTime = lastTime * 1000; // Load the final virtual time
+                    if(currentQuarterLabel) selectQuarter(currentQuarterLabel);
+                    updatePossessionStats();
+                    document.getElementById('timerDisplay').textContent = formatTime(getCurrentTime());
+                    
+                    isRunning = true; isPaused = true; // Set state to paused
+                    
+                    document.getElementById('setupContainer').style.display = 'none';
+                    document.getElementById('initialControls').style.display = 'none';
+                    document.getElementById('pauseBtn').style.display = 'block';
+                    document.getElementById('pauseBtn').textContent = 'Resume';
+                    document.getElementById('startQuarterBtn').style.display = 'block';
+                    document.getElementById('endControls').style.display = 'flex';
+                    setQuarterButtonsState(true);
+                    document.getElementById('status').textContent = `Match loaded. Paused at ${formatTime(lastTime)}.`;
+                } catch (error) {
+                    alert(`Error loading file: ${error.message}`);
+                    console.error(error);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // --- INITIALIZE ---
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('team1Name').addEventListener('input', updateTeamButtons);
+            document.getElementById('team2Name').addEventListener('input', updateTeamButtons);
+            document.getElementById('team1Color').addEventListener('change', updateTeamButtons);
+            document.getElementById('team2Color').addEventListener('change', updateTeamButtons);
+            document.getElementById('fileUploader').addEventListener('change', loadXMLFile);
+            Object.values(possessionTypes).forEach(p => document.getElementById(p.buttonId).disabled = true);
+            document.getElementById('endPossessionBtn').disabled = true;
+            updateTeamButtons();
+        });
+    </script>
+</body>
+</html>
