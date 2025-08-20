@@ -17,17 +17,18 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            margin: 1rem auto;
+            margin: 0.75rem auto; /* Reduced margin */
         }
 
         .field-grid {
             display: grid;
-            grid-template-columns: repeat(4, minmax(80px, 130px));
-            grid-template-rows: repeat(3, 100px);
+            /* Reduced column and row sizes */
+            grid-template-columns: repeat(4, minmax(70px, 110px));
+            grid-template-rows: repeat(3, 85px);
             gap: 3px;
             background-color: #000;
             border: 3px solid #fff;
-            border-radius: 60px; 
+            border-radius: 50px; /* Slightly smaller radius */
             overflow: hidden;
         }
 
@@ -40,11 +41,11 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            font-size: 0.8rem;
+            font-size: 0.7rem; /* Reduced font size */
             font-weight: bold;
-            padding: 4px;
+            padding: 2px;
             white-space: normal;
-            line-height: 1.2;
+            line-height: 1.1;
             border: none;
         }
 
@@ -59,24 +60,25 @@
             z-index: 5;
         }
 
-        #d50-pocket-left    { border-top-left-radius: 55px; }
-        #d50-pocket-right   { border-top-right-radius: 55px; }
-        #f50-pocket-left    { border-bottom-left-radius: 55px; }
-        #f50-pocket-right   { border-bottom-right-radius: 55px; }
+        /* Adjusted border radius for smaller grid */
+        #d50-pocket-left    { border-top-left-radius: 45px; }
+        #d50-pocket-right   { border-top-right-radius: 45px; }
+        #f50-pocket-left    { border-bottom-left-radius: 45px; }
+        #f50-pocket-right   { border-bottom-right-radius: 45px; }
 
         .control-panel {
             background-color: #2d2d2d;
-            padding: 1rem;
+            padding: 0.75rem; /* Reduced padding */
             border-radius: 12px;
-            margin: 1rem auto;
+            margin: 0.75rem auto; /* Reduced margin */
             max-width: 800px;
         }
 
         .control-btn, .possession-btn {
-            padding: 10px 15px;
+            padding: 8px 12px; /* Reduced padding */
             border: none;
             border-radius: 8px;
-            font-size: 1rem;
+            font-size: 0.9rem; /* Reduced font size */
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
@@ -109,7 +111,7 @@
             padding: 1rem;
             border-radius: 8px;
             margin-top: 1rem;
-            display: flex; /* Use flexbox for labels and scroll area */
+            display: flex; 
         }
         #timeline-labels {
             display: flex;
@@ -125,7 +127,7 @@
             display: flex;
             align-items: center;
             color: #ccc;
-            width: 100px; /* Fixed width for labels */
+            width: 100px; 
         }
         #timeline-scroll-area {
             position: relative;
@@ -694,4 +696,4 @@
         });
     </script>
 </body>
-</html>
+</ht
