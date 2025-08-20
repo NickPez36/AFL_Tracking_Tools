@@ -3,501 +3,694 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AFL Possession Tracker v2.1</title>
+    <title>AFL Analytics Coder - Camden Cats</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #1a1a1a; color: #ffffff; padding: 20px; min-height: 100vh; }
-        .container { max-width: 420px; margin: 0 auto; }
-        h1 { text-align: center; margin-bottom: 20px; font-size: 24px; }
-        .team-setup, .quarter-setup, .speed-setup { background: #2d2d2d; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
-        .team-config { margin-bottom: 20px; }
-        .team-config h3, .quarter-setup h3, .speed-setup h3 { margin-bottom: 10px; font-size: 18px; text-align: center; }
-        .input-group { margin-bottom: 15px; }
-        .team-name-color { display: flex; gap: 10px; align-items: flex-end; }
-        .name-input { flex: 1; }
-        label { display: block; margin-bottom: 5px; font-weight: 500; }
-        input[type="text"] { width: 100%; padding: 12px; border: 1px solid #444; border-radius: 8px; background: #3a3a3a; color: #ffffff; font-size: 16px; }
-        input[type="color"] { width: 60px; height: 49px; border: none; border-radius: 8px; cursor: pointer; }
-        .timer-display { display: flex; justify-content: center; gap: 20px; margin: 20px 0; }
-        .timer { text-align: center; font-size: 28px; font-weight: bold; color: #ffffff; font-family: monospace; }
-        .timer-label { font-size: 14px; color: #ccc; margin-bottom: 5px; }
-        .controls, .initial-controls { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
-        .control-row { display: flex; gap: 10px; }
-        .possession-controls { display: flex; flex-direction: column; gap: 10px; }
-        button { padding: 15px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; flex: 1; }
-        .start-btn { background: #4CAF50; color: white; }
-        .start-btn:hover { background: #45a049; }
-        .pause-btn { background: #ff9800; color: white; }
-        .pause-btn:hover { background: #f57c00; }
-        .load-btn { background: #607D8B; color: white; }
-        .load-btn:hover { background: #546E7A; }
-        .whistle-btn { background: #333; color: white; border: 2px solid #666; }
-        .whistle-btn:hover { background: #444; }
-        .possession-btn { color: white; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); padding: 20px; min-height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.3; }
-        .possession-btn:hover { transform: scale(1.05); }
-        .possession-btn.active, .quarter-btn.active, .speed-btn.active { transform: scale(0.95); box-shadow: inset 0 0 15px rgba(0,0,0,0.5); }
-        .possession-btn.active { animation: pulse 1s infinite; border: 3px solid #FFD700; }
-        .quarter-btn.active, .speed-btn.active { border: 3px solid #00BCD4; }
-        .possession-btn .team-name-display { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
-        @keyframes pulse { 0% { box-shadow: inset 0 0 15px rgba(0,0,0,0.5), 0 0 0 0 rgba(255, 215, 0, 0.7); } 50% { box-shadow: inset 0 0 15px rgba(0,0,0,0.5), 0 0 0 5px rgba(255, 215, 0, 0.3); } 100% { box-shadow: inset 0 0 15px rgba(0,0,0,0.5), 0 0 0 0 rgba(255, 215, 0, 0); } }
-        .possession-stats { font-size: 15px; margin-top: 5px; opacity: 0.9; }
-        .end-possession-btn { background: #ff9800; color: white; margin: 10px auto; display: block; }
-        .finish-btn { background: #f44336; color: white; }
-        .download-btn { background: #2196F3; color: white; }
-        .quarter-btn, .speed-btn { background: #455A64; color: white; }
-        .quarter-btn.active, .speed-btn.active { background: #0097A7; }
-        button:disabled { background: #666 !important; opacity: 0.7; cursor: not-allowed !important; }
-        .status { text-align: center; margin-top: 20px; font-size: 14px; color: #ccc; }
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #1a1a1a;
+            color: #f0f0f0;
+        }
+
+        .field-grid-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 1rem auto;
+        }
+
+        .field-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(80px, 130px));
+            grid-template-rows: repeat(3, 100px);
+            gap: 3px;
+            background-color: #000;
+            border: 3px solid #fff;
+            border-radius: 60px; 
+            overflow: hidden;
+        }
+
+        .zone-btn {
+            background-color: #4a4a4a;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            padding: 4px;
+            white-space: normal;
+            line-height: 1.2;
+            border: none;
+        }
+
+        .zone-btn.last-active {
+            transform: scale(1.05);
+            z-index: 10;
+            box-shadow: inset 0 0 0 3px #FFD700;
+        }
+        
+        .zone-btn:hover {
+            background-color: #6a6a6a;
+            z-index: 5;
+        }
+
+        #d50-pocket-left    { border-top-left-radius: 55px; }
+        #d50-pocket-right   { border-top-right-radius: 55px; }
+        #f50-pocket-left    { border-bottom-left-radius: 55px; }
+        #f50-pocket-right   { border-bottom-right-radius: 55px; }
+
+        .control-panel {
+            background-color: #2d2d2d;
+            padding: 1rem;
+            border-radius: 12px;
+            margin: 1rem auto;
+            max-width: 800px;
+        }
+
+        .control-btn, .possession-btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 1;
+        }
+
+        .control-btn:hover { background-color: #a00; }
+        .control-btn { background-color: #c00; color: white; }
+        .control-btn.active { background-color: #fff; color: #c00; border: 2px solid #c00; }
+        .control-btn:disabled { background: #555; cursor: not-allowed; }
+
+        .possession-btn {
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        .possession-btn.active {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
+            border: 2px solid white;
+        }
+        
+        #camden-btn { background-color: #c00; }
+        #opposition-btn { background-color: #007BFF; }
+        #dispute-btn { background-color: #6c757d; }
+
+        /* Visual Timeline Styles */
+        #timeline-visual-container {
+            background-color: #2b2b2b;
+            border: 1px solid #444;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            display: flex; /* Use flexbox for labels and scroll area */
+        }
+        #timeline-labels {
+            display: flex;
+            flex-direction: column;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        .timeline-label {
+            height: 25px;
+            margin-bottom: 5px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            color: #ccc;
+            width: 100px; /* Fixed width for labels */
+        }
+        #timeline-scroll-area {
+            position: relative;
+            height: 200px;
+            flex-grow: 1;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+        #timeline-rows {
+            position: relative;
+            height: 100%;
+            min-width: 100%;
+        }
+        #playhead {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #FFD700;
+            z-index: 100;
+        }
+        .timeline-row {
+            height: 25px;
+            margin-bottom: 5px;
+            position: relative;
+        }
+        .instance-bar {
+            position: absolute;
+            height: 100%;
+            border-radius: 4px;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        .instance-bar:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+        .tooltip {
+            visibility: hidden;
+            width: max-content;
+            background-color: #111;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 10px;
+            position: absolute;
+            z-index: 101;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
     </style>
 </head>
-<body>
-    <div class="container">
-        <h1>AFL Possession Tracker</h1>
-        
-        <div id="setupContainer">
-            <div class="team-setup">
-                <div class="team-config">
-                    <h3>Team 1</h3>
-                    <div class="input-group">
-                        <div class="team-name-color">
-                            <div class="name-input"><label>Team Name:</label><input type="text" id="team1Name" value="HomeTeam"></div>
-                            <div><label>Colour:</label><input type="color" id="team1Color" value="#3A5998"></div>
+<body class="p-4 md:p-8">
+
+    <!-- Modal -->
+    <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
+        <div class="bg-gray-800 p-8 rounded-lg shadow-xl text-center w-full max-w-sm">
+            <p id="modal-message" class="mb-6 text-lg">Modal Message</p>
+            <div id="modal-actions">
+                <button id="modal-confirm-btn" class="control-btn bg-red-600 hover:bg-red-700">Confirm</button>
+                <button id="modal-cancel-btn" class="control-btn bg-gray-600 hover:bg-gray-700">Cancel</button>
+                <button id="modal-ok-btn" class="hidden control-btn bg-blue-600 hover:bg-blue-700">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-5xl mx-auto">
+        <header class="text-center mb-4">
+            <h1 class="text-4xl font-bold text-white">AFL Analytics Coder</h1>
+            <p class="text-xl text-red-400">Camden Cats</p>
+        </header>
+
+        <main>
+            <!-- Setup and Global Controls -->
+            <div class="control-panel">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+                    <div class="flex flex-col gap-2">
+                         <label for="oppositionName" class="font-semibold">Opposition Team:</label>
+                         <input type="text" id="oppositionName" value="Opposition" class="bg-gray-700 border border-gray-600 rounded-lg p-2 text-white focus:outline-none focus:ring-2 focus:ring-red-500">
+                    </div>
+                    <div class="text-center">
+                        <div class="text-4xl font-mono" id="timerDisplay">00:00</div>
+                        <div class="text-sm text-gray-400" id="status">Ready to start</div>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <div class="flex gap-2 justify-center md:justify-end">
+                            <button id="startBtn" class="control-btn bg-green-600 hover:bg-green-700">Start</button>
+                            <button id="pauseBtn" class="control-btn bg-yellow-500 hover:bg-yellow-600 hidden">Pause</button>
+                            <button id="loadBtn" class="control-btn bg-gray-500 hover:bg-gray-600">Load XML</button>
+                            <input type="file" id="fileUploader" accept=".xml" class="hidden">
+                        </div>
+                        <div class="flex gap-2 justify-center md:justify-end">
+                            <button class="control-btn speed-btn active" data-speed="1">1x</button>
+                            <button class="control-btn speed-btn" data-speed="1.25">1.25x</button>
+                            <button class="control-btn speed-btn" data-speed="1.5">1.5x</button>
                         </div>
                     </div>
                 </div>
-                <div class="team-config">
-                    <h3>Team 2</h3>
-                    <div class="input-group">
-                        <div class="team-name-color">
-                            <div class="name-input"><label>Team Name:</label><input type="text" id="team2Name" value="AwayTeam"></div>
-                            <div><label>Colour:</label><input type="color" id="team2Color" value="#FFFFFF"></div>
+            </div>
+
+            <!-- Possession Controls -->
+            <div class="control-panel">
+                <h3 class="font-semibold text-center mb-2">Possession</h3>
+                <div class="flex gap-4 justify-center">
+                    <button id="camden-btn" class="possession-btn" data-possession="Camden Cats">Camden Cats</button>
+                    <button id="dispute-btn" class="possession-btn" data-possession="In Dispute">In Dispute</button>
+                    <button id="opposition-btn" class="possession-btn" data-possession="Opposition">Opposition</button>
+                </div>
+            </div>
+
+            <!-- Field Grid -->
+            <div class="field-grid-container">
+                <div class="field-grid">
+                    <button class="zone-btn" data-zone="D50 Left Pocket">D50 Left Pocket</button>
+                    <button class="zone-btn" data-zone="Defensive Rebound Zone Left">Defensive Rebound Zone Left</button>
+                    <button class="zone-btn" data-zone="Gold Zone Left">Gold Zone Left</button>
+                    <button class="zone-btn" data-zone="F50 Left Pocket">F50 Left Pocket</button>
+                    <button class="zone-btn" data-zone="D50 Danger Zone">D50 Danger Zone</button>
+                    <button class="zone-btn" data-zone="Defensive Rebound Zone Middle">Defensive Rebound Zone Middle</button>
+                    <button class="zone-btn" data-zone="Gold Zone Middle">Gold Zone Middle</button>
+                    <button class="zone-btn" data-zone="F50 Drop Zone">F50 Drop Zone</button>
+                    <button class="zone-btn" data-zone="D50 Right Pocket">D50 Right Pocket</button>
+                    <button class="zone-btn" data-zone="Defensive Rebound Zone Right">Defensive Rebound Zone Right</button>
+                    <button class="zone-btn" data-zone="Gold Zone Right">Gold Zone Right</button>
+                    <button class="zone-btn" data-zone="F50 Right Pocket">F50 Right Pocket</button>
+                </div>
+            </div>
+
+            <!-- Quarter and Action Controls -->
+            <div class="control-panel">
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="flex flex-col gap-2">
+                        <h3 class="font-semibold text-center">Quarter</h3>
+                        <div class="flex gap-2">
+                            <button class="control-btn quarter-btn active" data-q="Q1">Q1</button>
+                            <button class="control-btn quarter-btn" data-q="Q2">Q2</button>
+                            <button class="control-btn quarter-btn" data-q="Q3">Q3</button>
+                            <button class="control-btn quarter-btn" data-q="Q4">Q4</button>
                         </div>
                     </div>
-                </div>
+                    <div class="flex flex-col gap-2">
+                        <h3 class="font-semibold text-center">Actions</h3>
+                         <div class="flex gap-2">
+                            <button id="start-quarter-btn" class="control-btn">Start Qtr</button>
+                            <button id="whistle-btn" class="control-btn">Whistle</button>
+                            <button id="end-quarter-btn" class="control-btn">End Qtr</button>
+                            <button id="download-btn" class="control-btn">Download</button>
+                            <button id="reset-btn" class="control-btn">Reset</button>
+                        </div>
+                    </div>
+                 </div>
+                 <div id="timeline-visual-container">
+                    <div id="timeline-labels"></div>
+                    <div id="timeline-scroll-area">
+                        <div id="timeline-rows">
+                            <div id="playhead" style="left: 0;"></div>
+                        </div>
+                    </div>
+                 </div>
             </div>
-        </div>
-        
-        <div class="quarter-setup" id="quarterContainer">
-            <h3>Select Quarter</h3>
-            <div class="control-row" id="quarterSelection">
-                <button class="quarter-btn" id="q1Btn" onclick="selectQuarter('Q1')">Q1</button>
-                <button class="quarter-btn" id="q2Btn" onclick="selectQuarter('Q2')">Q2</button>
-                <button class="quarter-btn" id="q3Btn" onclick="selectQuarter('Q3')">Q3</button>
-                <button class="quarter-btn" id="q4Btn" onclick="selectQuarter('Q4')">Q4</button>
-            </div>
-        </div>
-
-        <div class="speed-setup" id="speedContainer">
-            <h3>Playback Speed</h3>
-            <div class="control-row" id="speedControls">
-                <button class="speed-btn active" onclick="setPlaybackRate(1)">1x</button>
-                <button class="speed-btn" onclick="setPlaybackRate(1.5)">1.5x</button>
-                <button class="speed-btn" onclick="setPlaybackRate(2)">2x</button>
-            </div>
-        </div>
-
-        <div class="timer-display">
-            <div class="timer"><div class="timer-label">Match Time</div><div id="timerDisplay">00:00.0</div></div>
-            <div class="timer"><div class="timer-label">Quarter Time</div><div id="quarterDisplay">00:00.0</div></div>
-        </div>
-
-        <div class="controls">
-            <div class="initial-controls" id="initialControls">
-                 <button class="start-btn" id="startBtn" onclick="startTimer()">Start Match</button>
-                 <button class="load-btn" id="loadBtn" onclick="document.getElementById('fileUploader').click()">Load Previous Match</button>
-                 <input type="file" id="fileUploader" accept=".xml" style="display:none;">
-            </div>
-
-            <button class="pause-btn" id="pauseBtn" onclick="togglePause()" style="display: none;">Pause</button>
-            
-            <button class="start-btn" id="startQuarterBtn" onclick="startQuarter()" style="display: none;">Start Quarter</button>
-            <button class="whistle-btn" id="whistleBtn" onclick="activateWhistle()" style="display: none;">Whistle</button>
-            
-            <div class="possession-controls" id="possessionControls" style="display: none;">
-                <div class="control-row">
-                    <button class="possession-btn" id="team1Btn" onclick="togglePossession('team1')"><div class="team-name-display">TeamA Possession</div><div class="possession-stats" id="team1Stats"></div></button>
-                    <button class="possession-btn" id="team2Btn" onclick="togglePossession('team2')"><div class="team-name-display">TeamB Possession</div><div class="possession-stats" id="team2Stats"></div></button>
-                </div>
-                <div class="control-row">
-                    <button class="possession-btn" id="team1FwdHalfBtn" onclick="togglePossession('team1FwdHalf')"><div class="team-name-display">TeamA Fwd Half</div><div class="possession-stats" id="team1FwdHalfStats"></div></button>
-                    <button class="possession-btn" id="team2FwdHalfBtn" onclick="togglePossession('team2FwdHalf')"><div class="team-name-display">TeamB Fwd Half</div><div class="possession-stats" id="team2FwdHalfStats"></div></button>
-                </div>
-                 <div class="control-row">
-                    <button class="possession-btn" id="disputedBtn" onclick="togglePossession('disputed')" style="background-color: #808080;"><div class="team-name-display">Disputed Ball</div><div class="possession-stats" id="disputedStats"></div></button>
-                </div>
-                <button class="end-possession-btn" id="endPossessionBtn" onclick="endPossession()" disabled>End Possession</button>
-            </div>
-
-            <div class="control-row" id="endControls" style="display: none;">
-                <button class="finish-btn" id="endQuarterBtn" onclick="endQuarter()">End Quarter</button>
-                <button class="finish-btn" onclick="finishMatch()">Finish Match</button>
-                <button class="download-btn" id="downloadBtn" onclick="downloadXML()" disabled>Download XML</button>
-            </div>
-        </div>
-
-        <div class="status" id="status">Ready to start</div>
+        </main>
     </div>
 
     <script>
-        // --- STATE VARIABLES ---
-        let masterInterval = null;
-        let isRunning = false, isPaused = false, quarterRunning = false;
-        
-        // Timekeeping state
-        let playbackRate = 1.0;
-        let lastRealTimeUpdate = 0; // Stores Date.now()
-        let matchVirtualTime = 0;   // Accumulated virtual time for the match in ms
-        let quarterVirtualTime = 0; // Accumulated virtual time for the quarter in ms
-
-        let instances = [], instanceIdCounter = 1;
-        let currentPossession = null, currentPossessionStart = 0, currentQuarterLabel = null;
-        
-        // Possession time trackers (stores virtual time in seconds)
-        let timeTrackers = {
-            team1PossessionTime: 0, team2PossessionTime: 0,
-            team1FwdHalfTime: 0, team2FwdHalfTime: 0, disputedTime: 0
-        };
-        const possessionTypes = {
-            team1: { timeKey: 'team1PossessionTime', buttonId: 'team1Btn', name: 'Possession', statId: 'team1Stats' },
-            team2: { timeKey: 'team2PossessionTime', buttonId: 'team2Btn', name: 'Possession', statId: 'team2Stats' },
-            team1FwdHalf: { timeKey: 'team1FwdHalfTime', buttonId: 'team1FwdHalfBtn', name: 'Fwd Half', statId: 'team1FwdHalfStats' },
-            team2FwdHalf: { timeKey: 'team2FwdHalfTime', buttonId: 'team2FwdHalfBtn', name: 'Fwd Half', statId: 'team2FwdHalfStats' },
-            disputed: { timeKey: 'disputedTime', buttonId: 'disputedBtn', name: 'Disputed Ball', statId: 'disputedStats' }
-        };
-
-        // --- HELPER FUNCTIONS ---
-        const hexToRgb = hex => { const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return r ? { r: parseInt(r[1], 16), g: parseInt(r[2], 16), b: parseInt(r[3], 16) } : null; };
-        const rgbTo16Bit = (r, g, b) => ({ R: Math.round(r * 65535 / 255), G: Math.round(g * 65535 / 255), B: Math.round(b * 65535 / 255) });
-        const escapeXml = unsafe => unsafe.replace(/[<>&'"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','\'':'&apos;','"':'&quot;'})[c]);
-        const formatTime = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}.${Math.floor((s%1)*10)}`;
-        const formatPossessionTime = s => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
-        
-        // --- TIMEKEEPING CORE ---
-        function masterUpdate() {
-            if (!isRunning || isPaused) return;
-
-            const now = Date.now();
-            const realElapsed = now - lastRealTimeUpdate;
-
-            if (realElapsed > 0) {
-                const virtualElapsed = realElapsed * playbackRate;
-                matchVirtualTime += virtualElapsed;
-                if (quarterRunning) {
-                    quarterVirtualTime += virtualElapsed;
-                }
-            }
-
-            lastRealTimeUpdate = now;
-
-            // Update displays
-            document.getElementById('timerDisplay').textContent = formatTime(matchVirtualTime / 1000);
-            if (quarterRunning) {
-                document.getElementById('quarterDisplay').textContent = formatTime(quarterVirtualTime / 1000);
-            }
-            updatePossessionStats();
-        }
-        
-        const getCurrentTime = () => matchVirtualTime / 1000;
-        const getCurrentQuarterTime = () => quarterVirtualTime / 1000;
-
-        // --- UI & STATE UPDATE FUNCTIONS ---
-        function updateTeamButtons() {
-            const team1Name = document.getElementById('team1Name').value || 'TeamA';
-            const team2Name = document.getElementById('team2Name').value || 'TeamB';
-            const team1Color = document.getElementById('team1Color').value;
-            const team2Color = document.getElementById('team2Color').value;
-            document.getElementById('team1Btn').innerHTML = `<div class="team-name-display">${escapeXml(team1Name)} Possession</div><div class="possession-stats" id="team1Stats"></div>`;
-            document.getElementById('team2Btn').innerHTML = `<div class="team-name-display">${escapeXml(team2Name)} Possession</div><div class="possession-stats" id="team2Stats"></div>`;
-            document.getElementById('team1FwdHalfBtn').innerHTML = `<div class="team-name-display">${escapeXml(team1Name)} Fwd Half</div><div class="possession-stats" id="team1FwdHalfStats"></div>`;
-            document.getElementById('team2FwdHalfBtn').innerHTML = `<div class="team-name-display">${escapeXml(team2Name)} Fwd Half</div><div class="possession-stats" id="team2FwdHalfStats"></div>`;
-            document.getElementById('disputedBtn').innerHTML = `<div class="team-name-display">Disputed Ball</div><div class="possession-stats" id="disputedStats"></div>`;
-            document.getElementById('team1Btn').style.backgroundColor = team1Color;
-            document.getElementById('team2Btn').style.backgroundColor = team2Color;
-            document.getElementById('team1FwdHalfBtn').style.backgroundColor = team1Color;
-            document.getElementById('team2FwdHalfBtn').style.backgroundColor = team2Color;
-            updatePossessionStats(); 
-        }
-
-        function updatePossessionStats() {
-            const currentTime = getCurrentTime();
-            let tempLiveTimes = { ...timeTrackers }; 
-            if (quarterRunning && currentPossession && !isPaused) {
-                const possessionInfo = possessionTypes[currentPossession];
-                // Time is in seconds, currentPossessionStart is in seconds
-                tempLiveTimes[possessionInfo.timeKey] += currentTime - currentPossessionStart;
-            }
-            const totalTrackedTime = Object.values(tempLiveTimes).reduce((a, b) => a + b, 0);
-            for (const type in possessionTypes) {
-                const info = possessionTypes[type];
-                const time = tempLiveTimes[info.timeKey];
-                const percent = totalTrackedTime > 0 ? Math.round((time / totalTrackedTime) * 100) : 0;
-                const statElement = document.getElementById(info.statId);
-                if (statElement) statElement.textContent = `${formatPossessionTime(time)} (${percent}%)`;
-            }
-        }
-        
-        function selectQuarter(qLabel) {
-            currentQuarterLabel = qLabel;
-            document.querySelectorAll('#quarterSelection button').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(qLabel.toLowerCase() + 'Btn').classList.add('active');
-            document.getElementById('status').textContent = `${qLabel} selected. Ready to start quarter.`;
-        }
-
-        function setPlaybackRate(rate) {
-            if (rate === playbackRate) return;
-            // Before changing the rate, do a final update at the old rate
-            masterUpdate();
-            playbackRate = rate;
-            // Update UI buttons
-            document.querySelectorAll('#speedControls button').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-        }
-        
-        function setQuarterButtonsState(disabled) {
-            document.querySelectorAll('#quarterSelection button').forEach(btn => btn.disabled = disabled);
-        }
-
-        // --- CORE LOGIC FUNCTIONS ---
-        function startTimer() {
-            if (!currentQuarterLabel) { alert("Please select a quarter first!"); return; }
-            
-            matchVirtualTime = 0;
-            lastRealTimeUpdate = Date.now();
-            isRunning = true;
-            isPaused = false;
-            
-            clearInterval(masterInterval);
-            masterInterval = setInterval(masterUpdate, 100);
-
-            document.getElementById('setupContainer').style.display = 'none';
-            document.getElementById('initialControls').style.display = 'none';
-            document.getElementById('pauseBtn').style.display = 'block';
-            document.getElementById('startQuarterBtn').style.display = 'block';
-            document.getElementById('endControls').style.display = 'flex';
-            setQuarterButtonsState(true);
-            document.getElementById('status').textContent = 'Match running - Start quarter to begin';
-        }
-
-        function togglePause() {
-            isPaused = !isPaused;
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Elements ---
+            const zoneButtons = document.querySelectorAll('.zone-btn');
+            const quarterButtons = document.querySelectorAll('.quarter-btn');
+            const possessionButtons = document.querySelectorAll('.possession-btn');
+            const speedButtons = document.querySelectorAll('.speed-btn');
+            const oppositionNameInput = document.getElementById('oppositionName');
+            const startBtn = document.getElementById('startBtn');
             const pauseBtn = document.getElementById('pauseBtn');
-            if (isPaused) {
-                // Before pausing, do a final update to "bank" the time
-                masterUpdate();
-                pauseBtn.textContent = 'Resume';
-                document.getElementById('status').textContent = `Match Paused at ${formatTime(getCurrentTime())}`;
-            } else { 
-                // When resuming, just reset the real time anchor
-                lastRealTimeUpdate = Date.now();
-                pauseBtn.textContent = 'Pause';
-                document.getElementById('status').textContent = 'Match Resumed.';
-            }
-        }
+            const loadBtn = document.getElementById('loadBtn');
+            const fileUploader = document.getElementById('fileUploader');
+            const startQuarterBtn = document.getElementById('start-quarter-btn');
+            const whistleBtn = document.getElementById('whistle-btn');
+            const endQuarterBtn = document.getElementById('end-quarter-btn');
+            const downloadBtn = document.getElementById('download-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const timerDisplay = document.getElementById('timerDisplay');
+            const statusDisplay = document.getElementById('status');
+            const timelineLabels = document.getElementById('timeline-labels');
+            const timelineScrollArea = document.getElementById('timeline-scroll-area');
+            const timelineRows = document.getElementById('timeline-rows');
+            const modal = document.getElementById('modal');
+            const modalMessage = document.getElementById('modal-message');
+            const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+            const modalCancelBtn = document.getElementById('modal-cancel-btn');
+            const modalOkBtn = document.getElementById('modal-ok-btn');
 
-        function startQuarter() {
-            quarterVirtualTime = 0;
-            quarterRunning = true;
-            document.getElementById('startQuarterBtn').style.display = 'none';
-            document.getElementById('whistleBtn').style.display = 'block';
-            document.getElementById('status').textContent = `${currentQuarterLabel} running`;
-        }
-        
-        function endCurrentPossession(endTime) { // endTime is in seconds
-            if (currentPossession) {
-                const duration = endTime - currentPossessionStart;
-                const possessionInfo = possessionTypes[currentPossession];
-                timeTrackers[possessionInfo.timeKey] += duration;
+            // --- State Variables ---
+            let instances = [];
+            let timer = null;
+            let isPaused = true;
+            let virtualTime = 0; // in seconds
+            let lastRealTimeUpdate = 0;
+            let playbackRate = 1;
+
+            let currentQuarter = 'Q1';
+            let currentPossession = null;
+            let lastActiveZoneBtn = null;
+            
+            // --- Timeline Config ---
+            const PIXELS_PER_SECOND = 5;
+            const ROW_DEFINITIONS = {
+                'Camden Cats': { row: 0, color: '#c00' },
+                'In Dispute': { row: 1, color: '#6c757d' },
+                'Opposition': { row: 2, color: '#007BFF' },
+                'Start of Quarter': { row: 3, color: '#28a745' },
+                'Whistle': { row: 4, color: '#FFFF00' },
+                'End of Quarter': { row: 5, color: '#8A2BE2' }
+            };
+
+            // --- Utility Functions ---
+            const formatTime = s => {
+                const minutes = String(Math.floor(s / 60)).padStart(2, '0');
+                const seconds = String(Math.floor(s % 60)).padStart(2, '0');
+                return `${minutes}:${seconds}`;
+            };
+            
+            const escapeXml = unsafe => unsafe.replace(/[<>&'"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','\'':'&apos;','"':'&quot;'})[c]);
+
+            // --- Timeline Function ---
+            const updateTimeline = () => {
+                const playhead = `<div id="playhead" style="left: ${virtualTime * PIXELS_PER_SECOND}px;"></div>`;
+                timelineRows.innerHTML = playhead;
                 
-                let code, teamName;
-                if (currentPossession.startsWith('team1')) teamName = document.getElementById('team1Name').value;
-                else if (currentPossession.startsWith('team2')) teamName = document.getElementById('team2Name').value;
-                code = teamName ? `${teamName} ${possessionInfo.name}` : possessionInfo.name;
-                
-                let labels = currentQuarterLabel ? [{ group: 'Quarter', text: currentQuarterLabel }] : [];
-                instances.push({ ID: instanceIdCounter++, start: currentPossessionStart, end: endTime, code: escapeXml(code), labels: labels });
-                
-                Object.values(possessionTypes).forEach(p => document.getElementById(p.buttonId).classList.remove('active'));
-                document.getElementById('endPossessionBtn').disabled = true;
-                currentPossession = null;
-            }
-        }
+                let maxTime = 60 * 35; // Default 35 min quarter
+                instances.forEach(inst => { if (inst.end > maxTime) maxTime = inst.end; });
+                timelineRows.style.width = `${maxTime * PIXELS_PER_SECOND}px`;
 
-        function endQuarter() {
-            quarterRunning = false;
-            endCurrentPossession(getCurrentTime());
-            updatePossessionStats();
-            document.getElementById('possessionControls').style.display = 'none';
-            document.getElementById('whistleBtn').style.display = 'none';
-            document.getElementById('quarterDisplay').textContent = '00:00.0';
-            document.getElementById('startQuarterBtn').style.display = 'block';
-            setQuarterButtonsState(false);
-            document.getElementById('status').textContent = `${currentQuarterLabel} ended. Select next quarter.`;
-        }
+                Object.keys(ROW_DEFINITIONS).forEach(key => {
+                    const rowDiv = document.createElement('div');
+                    rowDiv.className = 'timeline-row';
+                    timelineRows.appendChild(rowDiv);
+                });
 
-        function togglePossession(type) {
-            if (isPaused || !quarterRunning) return;
-            const currentTime = getCurrentTime();
-            const previousPossession = currentPossession;
-            if (currentPossession) endCurrentPossession(currentTime);
-            if (previousPossession !== type) {
-                currentPossession = type;
-                currentPossessionStart = currentTime;
-                const info = possessionTypes[type];
-                document.getElementById(info.buttonId).classList.add('active');
-                document.getElementById('endPossessionBtn').disabled = false;
-                let teamName = '';
-                if (type.startsWith('team1')) teamName = document.getElementById('team1Name').value;
-                if (type.startsWith('team2')) teamName = document.getElementById('team2Name').value;
-                document.getElementById('status').textContent = `${teamName} ${info.name} in progress`.trim();
-            } else {
-                 document.getElementById('status').textContent = 'No possession';
-            }
-            updatePossessionStats();
-        }
-
-        function endPossession() { if (isPaused) return; endCurrentPossession(getCurrentTime()); updatePossessionStats(); document.getElementById('status').textContent = 'No possession'; }
-
-        function activateWhistle() {
-            if (isPaused) return;
-            const currentTime = getCurrentTime();
-            endCurrentPossession(currentTime); 
-            let labels = [
-                { group: 'Team 1', text: escapeXml(document.getElementById('team1Name').value) },
-                { group: 'Team 2', text: escapeXml(document.getElementById('team2Name').value) }
-            ];
-            if (currentQuarterLabel) labels.push({ group: 'Quarter', text: currentQuarterLabel });
-            instances.push({ ID: instanceIdCounter++, start: currentTime - 2, end: currentTime + 2, code: 'Whistle', labels: labels });
-            document.getElementById('whistleBtn').style.display = 'none';
-            document.getElementById('possessionControls').style.display = 'flex';
-            Object.values(possessionTypes).forEach(p => document.getElementById(p.buttonId).disabled = false);
-            updatePossessionStats();
-            document.getElementById('status').textContent = 'Whistle blown';
-        }
-
-        function finishMatch() {
-            isRunning = false; quarterRunning = false; isPaused = true;
-            clearInterval(masterInterval);
-            endCurrentPossession(getCurrentTime());
-            updatePossessionStats();
-            document.querySelectorAll('button').forEach(btn => btn.style.display = 'none');
-            const downloadBtn = document.getElementById('downloadBtn');
-            const endControls = document.getElementById('endControls');
-            endControls.style.display = 'flex';
-            endControls.innerHTML = '';
-            endControls.appendChild(downloadBtn);
-            downloadBtn.style.display = 'block';
-            downloadBtn.disabled = false;
-
-            document.getElementById('status').textContent = 'Match finished - Ready to download';
-        }
-
-        function downloadXML() {
-            const team1Name = document.getElementById('team1Name').value;
-            const team2Name = document.getElementById('team2Name').value;
-            const team1RGB = rgbTo16Bit(...Object.values(hexToRgb(document.getElementById('team1Color').value)));
-            const team2RGB = rgbTo16Bit(...Object.values(hexToRgb(document.getElementById('team2Color').value)));
-            let xml = '<file>\n<ALL_INSTANCES>\n';
-            instances.forEach(i => {
-                xml += `<instance>\n<ID>${i.ID}</ID>\n<start>${i.start}</start>\n<end>${i.end}</end>\n<code>${i.code}</code>\n`;
-                if (i.labels && i.labels.length > 0) {
-                    i.labels.forEach(l => xml += `<label>\n<group>${escapeXml(l.group)}</group>\n<text>${escapeXml(l.text)}</text>\n</label>\n`);
-                }
-                xml += '</instance>\n';
-            });
-            xml += '</ALL_INSTANCES>\n<ROWS>\n';
-            const addRow = (code, rgb) => { xml += `<row>\n<code>${escapeXml(code)}</code>\n<R>${rgb.R}</R>\n<G>${rgb.G}</G>\n<B>${rgb.B}</B>\n</row>\n`; };
-            addRow(`${team1Name} Possession`, team1RGB); addRow(`${team2Name} Possession`, team2RGB);
-            addRow(`${team1Name} Fwd Half`, team1RGB); addRow(`${team2Name} Fwd Half`, team2RGB);
-            addRow('Disputed Ball', { R: 32768, G: 32768, B: 32768 });
-            addRow('Whistle', { R: 0, G: 0, B: 0 });
-            for(let i=1; i<=4; i++) xml += `<row>\n<code>Q${i}</code>\n<R>65535</R>\n</row>\n`;
-            xml += '</ROWS>\n</file>';
-            const today = new Date();
-            const dateStr = today.getFullYear().toString().substr(-2) + String(today.getMonth() + 1).padStart(2, '0') + String(today.getDate()).padStart(2, '0');
-            const filename = `${dateStr} - ${escapeXml(team1Name)} v ${escapeXml(team2Name)} - Possession.xml`;
-            const blob = new Blob([xml], { type: 'application/xml' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob); a.download = filename;
-            a.click(); URL.revokeObjectURL(a.href);
-        }
-
-        function loadXMLFile(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = e => {
-                try {
-                    const parser = new DOMParser();
-                    const xmlDoc = parser.parseFromString(e.target.result, "application/xml");
-                    if (xmlDoc.getElementsByTagName("parsererror").length) throw new Error('Failed to parse XML.');
-                    instances = [];
-                    timeTrackers = Object.keys(timeTrackers).reduce((acc, key) => ({...acc, [key]: 0}), {});
-                    let lastTime = 0, highestId = 0;
-                    const teamNames = {};
-                    xmlDoc.querySelectorAll('row').forEach(row => {
-                        const code = row.querySelector('code')?.textContent;
-                        const match = code?.match(/(.+) (Possession|Fwd Half)/);
-                        if(match){ const teamName = match[1]; if (!teamNames[teamName]) teamNames[teamName] = teamName; }
-                    });
-                    const discoveredTeams = Object.values(teamNames);
-                    if(discoveredTeams[0]) document.getElementById('team1Name').value = discoveredTeams[0];
-                    if(discoveredTeams[1]) document.getElementById('team2Name').value = discoveredTeams[1];
-                    updateTeamButtons();
-                    const t1Name = document.getElementById('team1Name').value;
-                    const t2Name = document.getElementById('team2Name').value;
-                    const codeToTimeKeyMap = {
-                        [`${t1Name} Possession`]: 'team1PossessionTime', [`${t2Name} Possession`]: 'team2PossessionTime',
-                        [`${t1Name} Fwd Half`]: 'team1FwdHalfTime', [`${t2Name} Fwd Half`]: 'team2FwdHalfTime',
-                        'Disputed Ball': 'disputedTime'
-                    };
-                    xmlDoc.querySelectorAll('instance').forEach(inst => {
-                        const id = parseInt(inst.querySelector('ID').textContent);
-                        const start = parseFloat(inst.querySelector('start').textContent);
-                        const end = parseFloat(inst.querySelector('end').textContent);
-                        const code = inst.querySelector('code').textContent;
-                        const duration = end - start;
-                        if (id > highestId) highestId = id; if (end > lastTime) lastTime = end;
-                        const timeKey = codeToTimeKeyMap[code];
-                        if(timeKey) timeTrackers[timeKey] += duration;
-                        const labels = Array.from(inst.querySelectorAll('label')).map(l => ({ group: l.querySelector('group').textContent, text: l.querySelector('text').textContent }));
-                        if(labels.some(l => l.group === 'Quarter')) currentQuarterLabel = labels.find(l => l.group === 'Quarter').text;
-                        instances.push({ ID: id, start, end, code: escapeXml(code), labels });
-                    });
-                    instanceIdCounter = highestId + 1;
-                    matchVirtualTime = lastTime * 1000; // Load the final virtual time
-                    if(currentQuarterLabel) selectQuarter(currentQuarterLabel);
-                    updatePossessionStats();
-                    document.getElementById('timerDisplay').textContent = formatTime(getCurrentTime());
+                instances.forEach(inst => {
+                    let rowInfo = null;
+                    const oppName = oppositionNameInput.value || 'Opposition';
+                    if (inst.code.includes('Start of Quarter')) rowInfo = ROW_DEFINITIONS['Start of Quarter'];
+                    else if (inst.code.includes('Whistle')) rowInfo = ROW_DEFINITIONS['Whistle'];
+                    else if (inst.code.includes('End of Quarter')) rowInfo = ROW_DEFINITIONS['End of Quarter'];
+                    else if (inst.code.includes('Camden Cats')) rowInfo = ROW_DEFINITIONS['Camden Cats'];
+                    else if (inst.code.includes('In Dispute')) rowInfo = ROW_DEFINITIONS['In Dispute'];
+                    else if (inst.code.includes(oppName)) rowInfo = ROW_DEFINITIONS['Opposition'];
                     
-                    isRunning = true; isPaused = true; // Set state to paused
-                    
-                    document.getElementById('setupContainer').style.display = 'none';
-                    document.getElementById('initialControls').style.display = 'none';
-                    document.getElementById('pauseBtn').style.display = 'block';
-                    document.getElementById('pauseBtn').textContent = 'Resume';
-                    document.getElementById('startQuarterBtn').style.display = 'block';
-                    document.getElementById('endControls').style.display = 'flex';
-                    setQuarterButtonsState(true);
-                    document.getElementById('status').textContent = `Match loaded. Paused at ${formatTime(lastTime)}.`;
-                } catch (error) {
-                    alert(`Error loading file: ${error.message}`);
-                    console.error(error);
+                    if (rowInfo) {
+                        const bar = document.createElement('div');
+                        bar.className = 'instance-bar';
+                        const duration = (inst.end > 0 ? inst.end : virtualTime) - inst.start;
+                        bar.style.left = `${inst.start * PIXELS_PER_SECOND}px`;
+                        bar.style.width = `${Math.max(2, duration * PIXELS_PER_SECOND)}px`; // Min width for visibility
+                        bar.style.backgroundColor = rowInfo.color;
+                        bar.innerHTML = `<span class="tooltip">${formatTime(inst.start)} - ${inst.end > 0 ? formatTime(inst.end) : '...'} | ${inst.code}</span>`;
+                        timelineRows.children[rowInfo.row + 1].appendChild(bar);
+                    }
+                });
+            };
+            
+            const setupTimelineLabels = () => {
+                timelineLabels.innerHTML = '';
+                Object.keys(ROW_DEFINITIONS).forEach(key => {
+                    const labelDiv = document.createElement('div');
+                    labelDiv.className = 'timeline-label';
+                    labelDiv.textContent = key === 'Opposition' ? (oppositionNameInput.value || 'Opposition') : key;
+                    timelineLabels.appendChild(labelDiv);
+                });
+            };
+
+            // --- Core Functions ---
+            const masterUpdate = () => {
+                if (isPaused) return;
+                const now = Date.now();
+                const realElapsed = (now - lastRealTimeUpdate) / 1000;
+                virtualTime += realElapsed * playbackRate;
+                lastRealTimeUpdate = now;
+                timerDisplay.textContent = formatTime(virtualTime);
+                const playheadEl = document.getElementById('playhead');
+                if (playheadEl) {
+                    playheadEl.style.left = `${virtualTime * PIXELS_PER_SECOND}px`;
+                    if (playheadEl.offsetLeft > timelineScrollArea.scrollLeft + timelineScrollArea.clientWidth - 50) {
+                        timelineScrollArea.scrollLeft = playheadEl.offsetLeft - timelineScrollArea.clientWidth + 50;
+                    }
                 }
             };
-            reader.readAsText(file);
-            event.target.value = '';
-        }
 
-        // --- INITIALIZE ---
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('team1Name').addEventListener('input', updateTeamButtons);
-            document.getElementById('team2Name').addEventListener('input', updateTeamButtons);
-            document.getElementById('team1Color').addEventListener('change', updateTeamButtons);
-            document.getElementById('team2Color').addEventListener('change', updateTeamButtons);
-            document.getElementById('fileUploader').addEventListener('change', loadXMLFile);
-            Object.values(possessionTypes).forEach(p => document.getElementById(p.buttonId).disabled = true);
-            document.getElementById('endPossessionBtn').disabled = true;
-            updateTeamButtons();
+            const startTimer = () => {
+                if (timer) return;
+                isPaused = false;
+                lastRealTimeUpdate = Date.now();
+                timer = setInterval(masterUpdate, 100);
+                startBtn.classList.add('hidden');
+                pauseBtn.classList.remove('hidden');
+                pauseBtn.textContent = 'Pause';
+                statusDisplay.textContent = 'Timer Running...';
+            };
+
+            const togglePause = () => {
+                isPaused = !isPaused;
+                if (isPaused) {
+                    masterUpdate();
+                    clearInterval(timer);
+                    timer = null;
+                    pauseBtn.textContent = 'Resume';
+                    statusDisplay.textContent = 'Paused';
+                } else {
+                    startTimer();
+                }
+            };
+            
+            const endLastInstance = () => {
+                if (instances.length > 0) {
+                    const lastInstance = instances[instances.length - 1];
+                    if (lastInstance.end === 0) {
+                        lastInstance.end = virtualTime;
+                    }
+                }
+                updateTimeline();
+            };
+
+            const createInstance = (code, labels = [], isInstant = false) => {
+                endLastInstance();
+                const newInstance = { 
+                    start: virtualTime, 
+                    end: isInstant ? virtualTime : 0, 
+                    code: code,
+                    labels: labels 
+                };
+                instances.push(newInstance);
+                updateTimeline();
+            };
+
+            const performReset = () => {
+                clearInterval(timer);
+                timer = null;
+                virtualTime = 0;
+                isPaused = true;
+                instances = [];
+                currentPossession = null;
+                timerDisplay.textContent = '00:00';
+                statusDisplay.textContent = 'Ready to start';
+                startBtn.classList.remove('hidden');
+                pauseBtn.classList.add('hidden');
+                possessionButtons.forEach(btn => btn.classList.remove('active'));
+                if (lastActiveZoneBtn) lastActiveZoneBtn.classList.remove('last-active');
+                lastActiveZoneBtn = null;
+                quarterButtons.forEach((btn, index) => btn.classList.toggle('active', index === 0));
+                currentQuarter = 'Q1';
+                updateTimeline();
+            };
+
+            // --- Event Handlers ---
+            startBtn.addEventListener('click', startTimer);
+            pauseBtn.addEventListener('click', togglePause);
+            resetBtn.addEventListener('click', () => { showConfirm("Are you sure you want to reset all data?", performReset); });
+
+            oppositionNameInput.addEventListener('input', () => {
+                const oppName = oppositionNameInput.value || 'Opposition';
+                const oppBtn = document.querySelector('[data-possession="Opposition"]');
+                oppBtn.textContent = oppName;
+                setupTimelineLabels();
+                updateTimeline();
+            });
+
+            quarterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    quarterButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    currentQuarter = button.dataset.q;
+                });
+            });
+
+            speedButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    speedButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    playbackRate = parseFloat(button.dataset.speed);
+                });
+            });
+
+            possessionButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const wasActive = button.classList.contains('active');
+                    possessionButtons.forEach(btn => btn.classList.remove('active'));
+                    
+                    if (wasActive) {
+                        currentPossession = null;
+                        endLastInstance();
+                        if (lastActiveZoneBtn) lastActiveZoneBtn.classList.remove('last-active');
+                        lastActiveZoneBtn = null;
+                        return;
+                    } 
+                    
+                    button.classList.add('active');
+                    currentPossession = button.dataset.possession === 'Opposition' ? (oppositionNameInput.value || 'Opposition') : button.dataset.possession;
+
+                    if (lastActiveZoneBtn) {
+                        const zoneName = lastActiveZoneBtn.dataset.zone;
+                        let forwardHalfLabel = '';
+                        const oppName = oppositionNameInput.value || 'Opposition';
+                        if (zoneName.includes('Gold Zone') || zoneName.includes('F50')) forwardHalfLabel = 'Camden Forward Half';
+                        else if (zoneName.includes('Defensive Rebound') || zoneName.includes('D50')) forwardHalfLabel = `${oppName} Forward Half`;
+                        
+                        const code = `${currentPossession} - ${zoneName}`;
+                        const labels = [{group: 'Quarter', text: currentQuarter}];
+                        if(forwardHalfLabel) labels.push({group: 'Forward Half', text: forwardHalfLabel});
+
+                        createInstance(code, labels);
+                    }
+                });
+            });
+
+            zoneButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    if (isPaused) { showAlert("Timer is paused."); return; }
+                    if (!currentPossession) { showAlert("Please select who has possession first."); return; }
+
+                    const wasActive = button.classList.contains('last-active');
+                    if (lastActiveZoneBtn) lastActiveZoneBtn.classList.remove('last-active');
+                    
+                    if (wasActive) {
+                        endLastInstance();
+                        lastActiveZoneBtn = null;
+                    } else {
+                        const zoneName = button.dataset.zone;
+                        let forwardHalfLabel = '';
+                        const oppName = oppositionNameInput.value || 'Opposition';
+                        if (zoneName.includes('Gold Zone') || zoneName.includes('F50')) forwardHalfLabel = 'Camden Forward Half';
+                        else if (zoneName.includes('Defensive Rebound') || zoneName.includes('D50')) forwardHalfLabel = `${oppName} Forward Half`;
+                        
+                        const code = `${currentPossession} - ${zoneName}`;
+                        const labels = [{group: 'Quarter', text: currentQuarter}];
+                        if(forwardHalfLabel) labels.push({group: 'Forward Half', text: forwardHalfLabel});
+
+                        createInstance(code, labels);
+                        button.classList.add('last-active');
+                        lastActiveZoneBtn = button;
+                    }
+                });
+            });
+            
+            startQuarterBtn.addEventListener('click', () => {
+                if (isPaused) { showAlert("Timer is paused."); return; }
+                createInstance('Start of Quarter', [{group: 'Quarter', text: currentQuarter}], true);
+            });
+            
+            whistleBtn.addEventListener('click', () => {
+                 if (isPaused) { showAlert("Timer is paused."); return; }
+                createInstance('Whistle', [{group: 'Quarter', text: currentQuarter}], true);
+            });
+            
+            endQuarterBtn.addEventListener('click', () => {
+                if (isPaused) { showAlert("Timer is paused."); return; }
+                possessionButtons.forEach(btn => btn.classList.remove('active'));
+                if (lastActiveZoneBtn) lastActiveZoneBtn.classList.remove('last-active');
+                lastActiveZoneBtn = null;
+                currentPossession = null;
+                createInstance('End of Quarter', [{group: 'Quarter', text: currentQuarter}], true);
+            });
+
+            downloadBtn.addEventListener('click', () => {
+                if (instances.length === 0) { showAlert("No data to download."); return; }
+                if (!isPaused) togglePause();
+                endLastInstance();
+
+                let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<file>\n<ALL_INSTANCES>\n';
+                instances.forEach((inst, index) => {
+                    xml += `  <instance>\n    <ID>${index + 1}</ID>\n    <start>${inst.start.toFixed(2)}</start>\n    <end>${inst.end.toFixed(2)}</end>\n    <code>${escapeXml(inst.code)}</code>\n`;
+                    if (inst.labels && inst.labels.length > 0) {
+                        inst.labels.forEach(l => xml += `    <label>\n      <group>${escapeXml(l.group)}</group>\n      <text>${escapeXml(l.text)}</text>\n    </label>\n`);
+                    }
+                    xml += '  </instance>\n';
+                });
+                xml += '</ALL_INSTANCES>\n<ROWS>\n';
+
+                const uniqueCodes = [...new Set(instances.map(i => i.code))];
+                uniqueCodes.forEach(code => {
+                    let color = { R: 65535, G: 65535, B: 65535 }; // Default white
+                    const oppName = oppositionNameInput.value || 'Opposition';
+                    if (code.includes('Camden Cats')) color = { R: 52428, G: 0, B: 0 }; // Red
+                    else if (code.includes(oppName)) color = { R: 0, G: 32124, B: 65535 }; // Blue
+                    else if (code.includes('In Dispute')) color = { R: 44444, G: 46948, B: 49152 }; // Grey
+                    else if (code.includes('Whistle')) color = { R: 65535, G: 65535, B: 0 }; // Yellow
+                    else if (code.includes('Start of Quarter')) color = { R: 10240, G: 42107, B: 17204 }; // Green
+                    else if (code.includes('End of Quarter')) color = { R: 35503, G: 11307, B: 58368 }; // Purple
+
+                    xml += `  <row>\n    <code>${escapeXml(code)}</code>\n    <R>${color.R}</R>\n    <G>${color.G}</G>\n    <B>${color.B}</B>\n  </row>\n`;
+                });
+                xml += '</ROWS>\n</file>';
+
+                const blob = new Blob([xml], { type: 'application/xml' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `camden_cats_analytics_${new Date().toISOString().slice(0,10)}.xml`;
+                a.click();
+                URL.revokeObjectURL(a.href);
+            });
+
+            loadBtn.addEventListener('click', () => fileUploader.click());
+            fileUploader.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = e => {
+                    try {
+                        const parser = new DOMParser();
+                        const xmlDoc = parser.parseFromString(e.target.result, "application/xml");
+                        if (xmlDoc.getElementsByTagName("parsererror").length) throw new Error('Failed to parse XML.');
+                        
+                        performReset();
+                        const loadedInstances = [];
+                        let lastTime = 0;
+                        xmlDoc.querySelectorAll('instance').forEach(inst => {
+                            const start = parseFloat(inst.querySelector('start').textContent);
+                            const end = parseFloat(inst.querySelector('end').textContent);
+                            const code = inst.querySelector('code').textContent;
+                            const labels = Array.from(inst.querySelectorAll('label')).map(l => ({ 
+                                group: l.querySelector('group').textContent, 
+                                text: l.querySelector('text').textContent 
+                            }));
+                            loadedInstances.push({ start, end, code, labels });
+                            if (end > lastTime) lastTime = end;
+                        });
+                        instances = loadedInstances;
+                        virtualTime = lastTime;
+                        timerDisplay.textContent = formatTime(virtualTime);
+                        statusDisplay.textContent = `Loaded file. Paused at ${formatTime(virtualTime)}`;
+                        updateTimeline();
+                        showAlert('File loaded successfully. Press Resume to continue.');
+                    } catch (error) {
+                        showAlert(`Error loading file: ${error.message}`);
+                    }
+                };
+                reader.readAsText(file);
+                event.target.value = '';
+            });
+
+            // --- Modal Functions ---
+            const showConfirm = (message, onConfirm) => {
+                modalMessage.textContent = message;
+                modalConfirmBtn.onclick = () => { onConfirm(); modal.classList.add('hidden'); };
+                modalCancelBtn.onclick = () => modal.classList.add('hidden');
+                modalConfirmBtn.classList.remove('hidden');
+                modalCancelBtn.classList.remove('hidden');
+                modalOkBtn.classList.add('hidden');
+                modal.classList.remove('hidden');
+            };
+            const showAlert = (message) => {
+                modalMessage.textContent = message;
+                modalOkBtn.onclick = () => modal.classList.add('hidden');
+                modalConfirmBtn.classList.add('hidden');
+                modalCancelBtn.classList.add('hidden');
+                modalOkBtn.classList.remove('hidden');
+                modal.classList.remove('hidden');
+            };
+
+            // --- Initial Setup ---
+            setupTimelineLabels();
+            updateTimeline();
         });
     </script>
 </body>
