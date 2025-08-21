@@ -226,6 +226,12 @@
                     <div class="flex flex-col gap-2">
                          <label for="oppositionName" class="font-semibold">Opposition Team:</label>
                          <input type="text" id="oppositionName" value="Opposition" class="bg-gray-700 border border-gray-600 rounded-lg p-2 text-white focus:outline-none focus:ring-2 focus:ring-red-500">
+                         <label class="font-semibold mt-2">Video Start Offset (MM:SS):</label>
+                         <div class="flex items-center gap-2">
+                             <input type="number" id="offset-min" class="bg-gray-700 border border-gray-600 rounded-lg p-2 text-white w-20 text-center" placeholder="MM" value="0">
+                             <span>:</span>
+                             <input type="number" id="offset-sec" class="bg-gray-700 border border-gray-600 rounded-lg p-2 text-white w-20 text-center" placeholder="SS" value="0">
+                         </div>
                     </div>
                     <div class="text-center">
                         <div class="flex justify-center items-center gap-2">
@@ -338,6 +344,8 @@
             const timelineRows = document.getElementById('timeline-rows');
             const rewindBtn = document.getElementById('rewindBtn');
             const ffBtn = document.getElementById('ffBtn');
+            const offsetMinInput = document.getElementById('offset-min');
+            const offsetSecInput = document.getElementById('offset-sec');
             
             // Modals
             const modal = document.getElementById('modal');
@@ -417,7 +425,6 @@
                         bar.style.backgroundColor = rowInfo.color;
                         bar.innerHTML = `<span class="tooltip">${formatTime(inst.start)} - ${inst.end > 0 ? formatTime(inst.end) : '...'} | ${inst.code}</span>`;
                         
-                        // Add click listener only for possession instances
                         if (!inst.code.includes('Quarter') && !inst.code.includes('Whistle')) {
                            bar.addEventListener('click', () => showEditModal(index));
                         }
@@ -516,6 +523,8 @@
                 lastActiveZoneBtn = null;
                 quarterButtons.forEach((btn, index) => btn.classList.toggle('active', index === 0));
                 currentQuarter = 'Q1';
+                offsetMinInput.value = 0;
+                offsetSecInput.value = 0;
                 updateTimeline();
             };
 
@@ -632,8 +641,15 @@
                 if (instances.length === 0) { showAlert("No data to download."); return; }
                 if (!isPaused) togglePause();
                 endLastInstance();
+                
+                const offsetMinutes = parseInt(offsetMinInput.value) || 0;
+                const offsetSeconds = parseInt(offsetSecInput.value) || 0;
+                const totalOffset = (offsetMinutes * 60) + offsetSeconds;
 
-                let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<file>\n<ALL_INSTANCES>\n';
+                let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<file>\n';
+                xml += `  <meta name="videoOffset" value="${totalOffset}" />\n`;
+                xml += '<ALL_INSTANCES>\n';
+
                 instances.forEach((inst, index) => {
                     xml += `  <instance>\n    <ID>${index + 1}</ID>\n    <start>${inst.start.toFixed(2)}</start>\n    <end>${inst.end.toFixed(2)}</end>\n    <code>${escapeXml(inst.code)}</code>\n`;
                     if (inst.labels && inst.labels.length > 0) {
@@ -643,8 +659,10 @@
                 });
                 xml += '</ALL_INSTANCES>\n<ROWS>\n';
 
-                const uniqueCodes = [...new Set(instances.map(i => i.code))];
-                uniqueCodes.forEach(code => {
+                const rowCodes = new Set(['Start of Quarter', 'Whistle', 'End of Quarter']);
+                instances.forEach(inst => rowCodes.add(inst.code));
+                
+                rowCodes.forEach(code => {
                     let color = { R: 65535, G: 65535, B: 65535 }; // Default white
                     const oppName = oppositionNameInput.value || 'Opposition';
                     if (code.includes('Camden Cats')) color = { R: 52428, G: 0, B: 0 }; // Red
@@ -678,6 +696,15 @@
                         if (xmlDoc.getElementsByTagName("parsererror").length) throw new Error('Failed to parse XML.');
                         
                         performReset();
+
+                        // Load offset from meta tag
+                        const metaTag = xmlDoc.querySelector('meta[name="videoOffset"]');
+                        if (metaTag) {
+                            const totalOffset = parseFloat(metaTag.getAttribute('value')) || 0;
+                            offsetMinInput.value = Math.floor(totalOffset / 60);
+                            offsetSecInput.value = totalOffset % 60;
+                        }
+
                         const loadedInstances = [];
                         let lastTime = 0;
                         xmlDoc.querySelectorAll('instance').forEach(inst => {
