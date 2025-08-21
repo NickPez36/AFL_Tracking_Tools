@@ -186,7 +186,7 @@
 </head>
 <body class="p-4 md:p-8">
 
-    <!-- Modal -->
+    <!-- Modals -->
     <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
         <div class="bg-gray-800 p-8 rounded-lg shadow-xl text-center w-full max-w-sm">
             <p id="modal-message" class="mb-6 text-lg">Modal Message</p>
@@ -197,6 +197,21 @@
             </div>
         </div>
     </div>
+    
+    <div id="edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
+        <div class="bg-gray-800 p-8 rounded-lg shadow-xl text-center w-full max-w-sm">
+            <h3 class="text-xl font-bold mb-4">Edit Possession</h3>
+            <p class="mb-4 text-gray-400">Select the correct team for this instance.</p>
+            <div id="edit-possession-btns" class="flex flex-col gap-3">
+                <!-- Edit buttons will be populated here -->
+            </div>
+            <input type="hidden" id="editing-instance-index">
+            <div class="mt-6 flex gap-4">
+                <button id="edit-cancel-btn" class="control-btn bg-gray-600 hover:bg-gray-700 w-full">Cancel</button>
+            </div>
+        </div>
+    </div>
+
 
     <div class="max-w-5xl mx-auto">
         <header class="text-center mb-4">
@@ -213,7 +228,11 @@
                          <input type="text" id="oppositionName" value="Opposition" class="bg-gray-700 border border-gray-600 rounded-lg p-2 text-white focus:outline-none focus:ring-2 focus:ring-red-500">
                     </div>
                     <div class="text-center">
-                        <div class="text-4xl font-mono" id="timerDisplay">00:00</div>
+                        <div class="flex justify-center items-center gap-2">
+                            <button id="rewindBtn" class="control-btn text-lg p-2 leading-none"><< 10s</button>
+                            <div class="text-4xl font-mono" id="timerDisplay">00:00</div>
+                            <button id="ffBtn" class="control-btn text-lg p-2 leading-none">10s >></button>
+                        </div>
                         <div class="text-sm text-gray-400" id="status">Ready to start</div>
                     </div>
                     <div class="flex flex-col gap-2">
@@ -317,11 +336,19 @@
             const timelineLabels = document.getElementById('timeline-labels');
             const timelineScrollArea = document.getElementById('timeline-scroll-area');
             const timelineRows = document.getElementById('timeline-rows');
+            const rewindBtn = document.getElementById('rewindBtn');
+            const ffBtn = document.getElementById('ffBtn');
+            
+            // Modals
             const modal = document.getElementById('modal');
             const modalMessage = document.getElementById('modal-message');
             const modalConfirmBtn = document.getElementById('modal-confirm-btn');
             const modalCancelBtn = document.getElementById('modal-cancel-btn');
             const modalOkBtn = document.getElementById('modal-ok-btn');
+            const editModal = document.getElementById('edit-modal');
+            const editPossessionBtns = document.getElementById('edit-possession-btns');
+            const editingInstanceIndex = document.getElementById('editing-instance-index');
+            const editCancelBtn = document.getElementById('edit-cancel-btn');
 
             // --- State Variables ---
             let instances = [];
@@ -360,7 +387,7 @@
                 const playhead = `<div id="playhead" style="left: ${virtualTime * PIXELS_PER_SECOND}px;"></div>`;
                 timelineRows.innerHTML = playhead;
                 
-                let maxTime = 60 * 35; // Default 35 min quarter
+                let maxTime = 60 * 35; 
                 instances.forEach(inst => { if (inst.end > maxTime) maxTime = inst.end; });
                 timelineRows.style.width = `${maxTime * PIXELS_PER_SECOND}px`;
 
@@ -370,7 +397,7 @@
                     timelineRows.appendChild(rowDiv);
                 });
 
-                instances.forEach(inst => {
+                instances.forEach((inst, index) => {
                     let rowInfo = null;
                     const oppName = oppositionNameInput.value || 'Opposition';
                     if (inst.code.includes('Start of Quarter')) rowInfo = ROW_DEFINITIONS['Start of Quarter'];
@@ -383,11 +410,18 @@
                     if (rowInfo) {
                         const bar = document.createElement('div');
                         bar.className = 'instance-bar';
+                        bar.dataset.index = index; // Store index for editing
                         const duration = (inst.end > 0 ? inst.end : virtualTime) - inst.start;
                         bar.style.left = `${inst.start * PIXELS_PER_SECOND}px`;
-                        bar.style.width = `${Math.max(2, duration * PIXELS_PER_SECOND)}px`; // Min width for visibility
+                        bar.style.width = `${Math.max(2, duration * PIXELS_PER_SECOND)}px`;
                         bar.style.backgroundColor = rowInfo.color;
                         bar.innerHTML = `<span class="tooltip">${formatTime(inst.start)} - ${inst.end > 0 ? formatTime(inst.end) : '...'} | ${inst.code}</span>`;
+                        
+                        // Add click listener only for possession instances
+                        if (!inst.code.includes('Quarter') && !inst.code.includes('Whistle')) {
+                           bar.addEventListener('click', () => showEditModal(index));
+                        }
+
                         timelineRows.children[rowInfo.row + 1].appendChild(bar);
                     }
                 });
@@ -670,6 +704,20 @@
                 reader.readAsText(file);
                 event.target.value = '';
             });
+            
+            rewindBtn.addEventListener('click', () => {
+                if (!isPaused) { showAlert("Please pause the timer to skip time."); return; }
+                virtualTime = Math.max(0, virtualTime - 10);
+                timerDisplay.textContent = formatTime(virtualTime);
+                updateTimeline();
+            });
+
+            ffBtn.addEventListener('click', () => {
+                if (!isPaused) { showAlert("Please pause the timer to skip time."); return; }
+                virtualTime += 10;
+                timerDisplay.textContent = formatTime(virtualTime);
+                updateTimeline();
+            });
 
             // --- Modal Functions ---
             const showConfirm = (message, onConfirm) => {
@@ -689,6 +737,44 @@
                 modalOkBtn.classList.remove('hidden');
                 modal.classList.remove('hidden');
             };
+            
+            const showEditModal = (index) => {
+                editingInstanceIndex.value = index;
+                editPossessionBtns.innerHTML = ''; // Clear old buttons
+                
+                const teams = ['Camden Cats', 'In Dispute', oppositionNameInput.value || 'Opposition'];
+                teams.forEach(team => {
+                    const btn = document.createElement('button');
+                    btn.textContent = team;
+                    btn.className = 'control-btn';
+                    btn.onclick = () => saveEdit(team);
+                    editPossessionBtns.appendChild(btn);
+                });
+
+                editModal.classList.remove('hidden');
+            };
+
+            const saveEdit = (newPossession) => {
+                const index = parseInt(editingInstanceIndex.value);
+                const instanceToEdit = instances[index];
+                if (!instanceToEdit) return;
+
+                const zoneName = instanceToEdit.code.split(' - ')[1];
+                
+                let forwardHalfLabel = '';
+                const oppName = oppositionNameInput.value || 'Opposition';
+                if (zoneName.includes('Gold Zone') || zoneName.includes('F50')) forwardHalfLabel = 'Camden Forward Half';
+                else if (zoneName.includes('Defensive Rebound') || zoneName.includes('D50')) forwardHalfLabel = `${oppName} Forward Half`;
+
+                instanceToEdit.code = `${newPossession} - ${zoneName}`;
+                instanceToEdit.labels = [{ group: 'Quarter', text: currentQuarter }];
+                if (forwardHalfLabel) instanceToEdit.labels.push({ group: 'Forward Half', text: forwardHalfLabel });
+
+                updateTimeline();
+                editModal.classList.add('hidden');
+            };
+
+            editCancelBtn.addEventListener('click', () => editModal.classList.add('hidden'));
 
             // --- Initial Setup ---
             setupTimelineLabels();
@@ -696,4 +782,4 @@
         });
     </script>
 </body>
-</ht
+</html>
