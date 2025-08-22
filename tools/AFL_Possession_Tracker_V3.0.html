@@ -235,9 +235,11 @@
                     </div>
                     <div class="text-center">
                         <div class="flex justify-center items-center gap-2">
+                            <button id="rewind60Btn" class="control-btn text-lg p-2 leading-none"><< 60s</button>
                             <button id="rewindBtn" class="control-btn text-lg p-2 leading-none"><< 10s</button>
                             <div class="text-4xl font-mono" id="timerDisplay">00:00</div>
                             <button id="ffBtn" class="control-btn text-lg p-2 leading-none">10s >></button>
+                            <button id="ff60Btn" class="control-btn text-lg p-2 leading-none">60s >></button>
                         </div>
                         <div class="text-sm text-gray-400" id="status">Ready to start</div>
                     </div>
@@ -257,13 +259,23 @@
                 </div>
             </div>
 
-            <!-- Possession Controls -->
+            <!-- Possession and Direction Controls -->
             <div class="control-panel">
-                <h3 class="font-semibold text-center mb-2">Possession</h3>
-                <div class="flex gap-4 justify-center">
-                    <button id="camden-btn" class="possession-btn" data-possession="Camden Cats">Camden Cats</button>
-                    <button id="dispute-btn" class="possession-btn" data-possession="In Dispute">In Dispute</button>
-                    <button id="opposition-btn" class="possession-btn" data-possession="Opposition">Opposition</button>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h3 class="font-semibold text-center mb-2">Possession</h3>
+                        <div class="flex gap-4 justify-center">
+                            <button id="camden-btn" class="possession-btn" data-possession="Camden Cats">Camden Cats</button>
+                            <button id="dispute-btn" class="possession-btn" data-possession="In Dispute">In Dispute</button>
+                            <button id="opposition-btn" class="possession-btn" data-possession="Opposition">Opposition</button>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-center mb-2">Team Direction</h3>
+                        <div class="flex gap-4 justify-center">
+                            <button id="direction-btn" class="control-btn w-full">Attacking Right →</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -344,8 +356,11 @@
             const timelineRows = document.getElementById('timeline-rows');
             const rewindBtn = document.getElementById('rewindBtn');
             const ffBtn = document.getElementById('ffBtn');
+            const rewind60Btn = document.getElementById('rewind60Btn');
+            const ff60Btn = document.getElementById('ff60Btn');
             const offsetMinInput = document.getElementById('offset-min');
             const offsetSecInput = document.getElementById('offset-sec');
+            const directionBtn = document.getElementById('direction-btn');
             
             // Modals
             const modal = document.getElementById('modal');
@@ -369,6 +384,7 @@
             let currentQuarter = 'Q1';
             let currentPossession = null;
             let lastActiveZoneBtn = null;
+            let isDirectionReversed = false;
             
             // --- Timeline Config ---
             const PIXELS_PER_SECOND = 5;
@@ -525,13 +541,39 @@
                 currentQuarter = 'Q1';
                 offsetMinInput.value = 0;
                 offsetSecInput.value = 0;
+                if (isDirectionReversed) flipFieldDirection(); // Reset to default
                 updateTimeline();
+            };
+
+            const flipFieldDirection = () => {
+                isDirectionReversed = !isDirectionReversed;
+                directionBtn.textContent = isDirectionReversed ? '← Attacking Left' : 'Attacking Right →';
+
+                const originalLabels = [
+                    "D50 Left Pocket", "Defensive Rebound Zone Left", "Gold Zone Left", "F50 Left Pocket",
+                    "D50 Danger Zone", "Defensive Rebound Zone Middle", "Gold Zone Middle", "F50 Drop Zone",
+                    "D50 Right Pocket", "Defensive Rebound Zone Right", "Gold Zone Right", "F50 Right Pocket"
+                ];
+
+                const reversedLabels = [
+                    "F50 Right Pocket", "Gold Zone Right", "Defensive Rebound Zone Right", "D50 Right Pocket",
+                    "F50 Drop Zone", "Gold Zone Middle", "Defensive Rebound Zone Middle", "D50 Danger Zone",
+                    "F50 Left Pocket", "Gold Zone Left", "Defensive Rebound Zone Left", "D50 Left Pocket"
+                ];
+
+                const labelsToApply = isDirectionReversed ? reversedLabels : originalLabels;
+
+                zoneButtons.forEach((btn, index) => {
+                    btn.textContent = labelsToApply[index];
+                    btn.dataset.zone = labelsToApply[index];
+                });
             };
 
             // --- Event Handlers ---
             startBtn.addEventListener('click', startTimer);
             pauseBtn.addEventListener('click', togglePause);
             resetBtn.addEventListener('click', () => { showConfirm("Are you sure you want to reset all data?", performReset); });
+            directionBtn.addEventListener('click', flipFieldDirection);
 
             oppositionNameInput.addEventListener('input', () => {
                 const oppName = oppositionNameInput.value || 'Opposition';
@@ -742,6 +784,20 @@
             ffBtn.addEventListener('click', () => {
                 if (!isPaused) { showAlert("Please pause the timer to skip time."); return; }
                 virtualTime += 10;
+                timerDisplay.textContent = formatTime(virtualTime);
+                updateTimeline();
+            });
+
+            rewind60Btn.addEventListener('click', () => {
+                if (!isPaused) { showAlert("Please pause the timer to skip time."); return; }
+                virtualTime = Math.max(0, virtualTime - 60);
+                timerDisplay.textContent = formatTime(virtualTime);
+                updateTimeline();
+            });
+
+            ff60Btn.addEventListener('click', () => {
+                if (!isPaused) { showAlert("Please pause the timer to skip time."); return; }
+                virtualTime += 60;
                 timerDisplay.textContent = formatTime(virtualTime);
                 updateTimeline();
             });
