@@ -234,12 +234,16 @@
                          </div>
                     </div>
                     <div class="text-center">
-                        <div class="flex justify-center items-center gap-2">
-                            <button id="rewind60Btn" class="control-btn text-lg p-2 leading-none"><< 60s</button>
-                            <button id="rewindBtn" class="control-btn text-lg p-2 leading-none"><< 10s</button>
-                            <div class="text-4xl font-mono" id="timerDisplay">00:00</div>
-                            <button id="ffBtn" class="control-btn text-lg p-2 leading-none">10s >></button>
-                            <button id="ff60Btn" class="control-btn text-lg p-2 leading-none">60s >></button>
+                        <div class="flex flex-col items-center gap-1">
+                            <div class="flex justify-center items-center gap-2">
+                                <button id="rewindBtn" class="control-btn text-lg p-2 leading-none"><< 10s</button>
+                                <div class="text-4xl font-mono" id="timerDisplay">00:00</div>
+                                <button id="ffBtn" class="control-btn text-lg p-2 leading-none">10s >></button>
+                            </div>
+                            <div class="flex justify-center items-center gap-2">
+                                <button id="rewind60Btn" class="control-btn text-sm p-1 leading-none"><< 60s</button>
+                                <button id="ff60Btn" class="control-btn text-sm p-1 leading-none">60s >></button>
+                            </div>
                         </div>
                         <div class="text-sm text-gray-400" id="status">Ready to start</div>
                     </div>
@@ -865,4 +869,4 @@
         });
     </script>
 </body>
-</html>
+</ht
